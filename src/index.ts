@@ -5,6 +5,8 @@ import {
   seedInitialPricesCleaning,
 } from "./services/priceService";
 import pricesRoute from "./routes/pricesRoute";
+import movingRoute from "./routes/movingRoute";
+import cleaningRoute from "./routes/CleaningRoute";
 
 const app = express();
 const port = 4000;
@@ -21,6 +23,8 @@ mongoose
   });
 
 app.use("/prices", pricesRoute);
+app.use("/moving", movingRoute);
+app.use("/cleaning", cleaningRoute);
 
 seedInitialPrices();
 seedInitialPricesCleaning();
