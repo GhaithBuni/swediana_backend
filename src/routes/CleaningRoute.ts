@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  addBooking,
+  addCleaningBooking,
   deleteBooking,
   getCleaningBooking,
 } from "../services/cleaningService";
@@ -12,46 +12,42 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const {
-    size,
-    postnummer,
-    buildingType,
-    floor,
-    Access,
-    parkingDistance,
-    Persinner,
-    ExtraBadrum,
-    ExtraToalett,
-    inglassadDusch,
-    name,
-    email,
-    telefon,
-    date,
-    presonalNumber,
-    apartmentKeys,
-    message,
-  } = req.body;
+  try {
+    const result = await addCleaningBooking({
+      size: req.body.size,
+      // address (flat)
+      postnummer: req.body.addressPostnummer,
+      buildingType: req.body.addressHomeType,
+      floor: req.body.addressFloor,
+      Access: req.body.addressAccess,
+      parkingDistance: req.body.addressParkingDistance,
 
-  const data = await addBooking({
-    size,
-    postnummer,
-    buildingType,
-    floor,
-    Access,
-    parkingDistance,
-    Persinner,
-    ExtraBadrum,
-    ExtraToalett,
-    inglassadDusch,
-    name,
-    email,
-    telefon,
-    date,
-    presonalNumber,
-    apartmentKeys,
-    message,
-  });
-  res.status(200).send(data);
+      // extras
+      Persienner: req.body.Persienner,
+      badrum: req.body.badrum,
+      toalett: req.body.toalett,
+      Inglasadduschhörna: req.body.Inglasadduschhörna,
+
+      // customer
+      name: req.body.name,
+      email: req.body.email,
+      telefon: req.body.telefon,
+      date: req.body.date,
+      presonalNumber: req.body.presonalNumber,
+      message: req.body.message,
+
+      // optional UI snapshot
+      priceDetails: req.body.priceDetails,
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(201).json(result);
+  } catch (err) {
+    console.error("Error creating cleaning booking:", err);
+    return res.status(500).json({ error: "Could not create cleaning booking" });
+  }
 });
 
 router.delete("/:id", async (req, res) => {

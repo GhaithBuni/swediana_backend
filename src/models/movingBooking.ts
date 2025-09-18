@@ -1,67 +1,159 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const serivceOptionEnum = ["Ja", "Nej"];
+const YES_NO = ["JA", "NEJ"] as const;
+type YesNo = (typeof YES_NO)[number];
 
-export interface ImovingBooking extends Document {
-  size: number;
-  postnummer: string;
-  postNummerTo: string;
-  buildingType: string;
+type Access = "stairs" | "elevator" | "large-elevator";
+type HomeType = "lagenhet" | "Hus" | "forrad" | "kontor";
+
+export interface IAddress {
+  postcode: string;
+  homeType: HomeType;
   floor: string;
-  Access: string;
+  access: Access;
   parkingDistance: number;
-  //New Adress
-  buildingTypeNew: string;
-  floorNew: string;
-  AccessNew: string;
-  parkingDistanceNew: number;
-  //Extra Serivces
-  packaging: "Ja" | "Nej";
-  mounting: "Ja" | "Nej";
-  Disposal: "Ja" | "Nej";
-  cleaningOption: "Ja" | "Nej";
-  Storage: "Ja" | "Nej";
-  whatToMove: string;
-  // Boking Deatiles
-  name: string;
-  email: string;
-  telefon: string;
-  date: string;
-  presonalNumber: string;
-  apartmentKeys: string;
-  message: string;
 }
 
-const movingBookingSchema = new Schema<ImovingBooking>({
-  size: { type: Number, required: true },
-  postnummer: { type: String, required: true },
-  postNummerTo: { type: String, required: true },
-  buildingType: { type: String, required: true },
-  floor: { type: String, required: true },
-  Access: { type: String, required: true },
-  parkingDistance: { type: Number, required: true },
-  buildingTypeNew: { type: String, required: true },
-  floorNew: { type: String, required: true },
-  AccessNew: { type: String, required: true },
-  parkingDistanceNew: { type: Number, required: true },
-  packaging: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  mounting: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  Disposal: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  cleaningOption: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  Storage: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  whatToMove: { type: String, required: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  telefon: { type: String, required: true },
-  date: { type: String, required: true },
-  presonalNumber: { type: String, required: true },
-  apartmentKeys: { type: String, required: true },
-  message: { type: String, required: true },
-});
+/** ─── PRICE SNAPSHOT TYPES ───────────────────────────────────────────── */
+export interface IPriceLine {
+  key: string; // e.g. "packa", "cleaningBase", "clean-Persienner"
+  label: string; // human label shown to the user
+  amount: number; // line total in SEK
+  meta?: string; // e.g. "2 × 150 kr" or "~ 1200 kr"
+}
 
-const movingBookingModel = mongoose.model<ImovingBooking>(
-  "Moving Booking",
-  movingBookingSchema
+export interface IPriceTotals {
+  movingBase: number;
+  movingExtras: number;
+  cleaningBaseAfterDiscount: number;
+  cleaningExtras: number;
+  grandTotal: number;
+  currency?: "SEK";
+}
+
+export interface IPriceDetails {
+  lines: IPriceLine[];
+  totals: IPriceTotals;
+}
+/** ───────────────────────────────────────────────────────────────────── */
+
+export interface IMovingBooking extends Document {
+  size: number; // m² or m³
+  from: IAddress;
+  to: IAddress;
+
+  // Extra services (simple JA/NEJ flags)
+  packa: YesNo;
+  packaKitchen: YesNo;
+  montera: YesNo;
+  flyttstad: YesNo;
+
+  // Customer details
+  name: string;
+  email: string;
+  phone: string;
+  personalNumber?: string;
+  apartmentKeys?: string;
+  whatToMove?: string;
+  message?: string;
+
+  // Booking date/time
+  date: Date;
+  status: "pending" | "confirmed" | "cancelled";
+
+  /** Price snapshot at booking time */
+  priceDetails?: IPriceDetails;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AddressSchema = new Schema<IAddress>(
+  {
+    postcode: { type: String, required: true, trim: true },
+    homeType: {
+      type: String,
+      enum: ["lagenhet", "Hus", "forrad", "kontor"],
+      required: true,
+    },
+    floor: { type: String, required: true },
+    access: {
+      type: String,
+      enum: ["stairs", "elevator", "large-elevator"],
+      required: true,
+    },
+    parkingDistance: { type: Number, required: true },
+  },
+  { _id: false }
 );
 
-export default movingBookingModel;
+/** ─── PRICE SNAPSHOT SCHEMAS ─────────────────────────────────────────── */
+const PriceLineSchema = new Schema<IPriceLine>(
+  {
+    key: { type: String, required: true, trim: true },
+    label: { type: String, required: true, trim: true },
+    amount: { type: Number, required: true, min: 0 },
+    meta: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
+const PriceTotalsSchema = new Schema<IPriceTotals>(
+  {
+    movingBase: { type: Number, required: true, min: 0 },
+    movingExtras: { type: Number, required: true, min: 0 },
+    cleaningBaseAfterDiscount: { type: Number, required: true, min: 0 },
+    cleaningExtras: { type: Number, required: true, min: 0 },
+    grandTotal: { type: Number, required: true, min: 0 },
+    currency: { type: String, enum: ["SEK"], default: "SEK" },
+  },
+  { _id: false }
+);
+
+const PriceDetailsSchema = new Schema<IPriceDetails>(
+  {
+    lines: { type: [PriceLineSchema], default: [] },
+    totals: { type: PriceTotalsSchema, required: true },
+  },
+  { _id: false }
+);
+/** ───────────────────────────────────────────────────────────────────── */
+
+const MovingBookingSchema = new Schema<IMovingBooking>(
+  {
+    size: { type: Number, required: true },
+
+    from: { type: AddressSchema, required: true },
+    to: { type: AddressSchema, required: true },
+
+    packa: { type: String, enum: YES_NO, default: "NEJ" },
+    packaKitchen: { type: String, enum: YES_NO, default: "NEJ" },
+    montera: { type: String, enum: YES_NO, default: "NEJ" },
+    flyttstad: { type: String, enum: YES_NO, default: "NEJ" },
+
+    name: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    personalNumber: { type: String, trim: true },
+    apartmentKeys: { type: String, trim: true },
+    whatToMove: { type: String, trim: true },
+    message: { type: String, trim: true },
+
+    date: { type: Date, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "pending",
+    },
+
+    /** Price snapshot */
+    priceDetails: { type: PriceDetailsSchema, required: false },
+  },
+  { timestamps: true }
+);
+
+const MovingBookingModel =
+  mongoose.models.MovingBooking ||
+  mongoose.model<IMovingBooking>("MovingBooking", MovingBookingSchema);
+
+export default MovingBookingModel;

@@ -63,7 +63,7 @@ export const calculatePrice = async ({
   postNummerTo,
 }: PriceParams) => {
   try {
-    console.log("Starting calculatePrice function");
+    console.log("Starting calculatePrice function", postNummer, postNummerTo);
 
     // constants
     const FREE_KM = 31;
@@ -122,12 +122,30 @@ export const calculatePrice = async ({
       movingPrice = prices.pricePerKvm * size + extraKmCost;
     }
 
+    const cleaning = await cleanPriceModel
+      .findOne({}, { pricePerKvm: 1, fixedPrice: 1, extraServices: 1 })
+      .lean();
+    if (!cleaning) {
+      console.error("Prices not found in database");
+      return { data: "Prisdata saknas", statusCode: 500 };
+    }
+
+    let cleaningPrice = 0;
+
+    if (size <= 50) {
+      cleaningPrice = cleaning.fixedPrice;
+    } else {
+      cleaningPrice = cleaning.pricePerKvm * size;
+    }
+
     console.log("Moving price calculated", movingPrice);
 
     return {
       data: {
         movingPrice,
         extraServices: prices.extraServices ?? [],
+        cleaningPrice,
+        extraServicesCleaning: cleaning.extraServices ?? [],
         breakdown: {
           size,
           distanceOut: distance,

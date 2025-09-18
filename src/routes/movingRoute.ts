@@ -12,62 +12,47 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const {
-    size,
-    postnummer,
-    postNummerTo,
-    buildingType,
-    floor,
-    Access,
-    parkingDistance,
-    buildingTypeNew,
-    floorNew,
-    AccessNew,
-    parkingDistanceNew,
-    packaging,
-    mounting,
-    Disposal,
-    cleaningOption,
-    Storage,
-    whatToMove,
-    name,
-    email,
-    telefon,
-    date,
-    presonalNumber,
-    apartmentKeys,
-    message,
-  } = req.body;
+  try {
+    // If your addBooking expects flat fields (fromPostnummer, etc.), pass req.body as-is.
+    const result = await addBooking({
+      size: req.body.size,
+      postnummer: req.body.fromPostnummer,
+      postNummerTo: req.body.toPostnummer,
+      buildingType: req.body.fromHomeType,
+      floor: req.body.fromFloor,
+      Access: req.body.fromAccess,
+      parkingDistance: req.body.fromParkingDistance,
+      buildingTypeNew: req.body.toHomeType,
+      floorNew: req.body.toFloor,
+      AccessNew: req.body.toAccess,
+      parkingDistanceNew: req.body.toParkingDistance,
+      priceDetails: req.body.priceDetails,
 
-  const data = await addBooking({
-    size,
-    postnummer,
-    postNummerTo,
-    buildingType,
-    floor,
-    Access,
-    parkingDistance,
-    buildingTypeNew,
-    floorNew,
-    AccessNew,
-    parkingDistanceNew,
-    packaging,
-    mounting,
-    Disposal,
-    cleaningOption,
-    Storage,
-    whatToMove,
-    name,
-    email,
-    telefon,
-    date,
-    presonalNumber,
-    apartmentKeys,
-    message,
-  });
-  res.status(200).send(data);
+      // extras (map names to what addBooking expects)
+      packaging: req.body.packa,
+      mounting: req.body.montera,
+      cleaningOption: req.body.flyttstad,
+      packaKitchen: req.body.packaKitchen,
+
+      whatToMove: req.body.whatToMove,
+      name: req.body.name,
+      email: req.body.email,
+      telefon: req.body.phone,
+      date: req.body.date, // you can convert to Date inside helper
+      presonalNumber: req.body.personalNumber, // keep spelling if helper expects it
+      apartmentKeys: req.body.apartmentKeys,
+      message: req.body.message,
+    });
+
+    if (!result?.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(201).json(result);
+  } catch (err) {
+    console.error("Error creating booking:", err);
+    return res.status(500).json({ error: "Could not create booking" });
+  }
 });
-
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;

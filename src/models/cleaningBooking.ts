@@ -1,54 +1,112 @@
-import mongoose, { Document, Schema } from "mongoose";
+// server/models/CleaningBooking.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-const serivceOptionEnum = ["Ja", "Nej"];
+const YES_NO = ["JA", "NEJ"] as const;
+type YesNo = (typeof YES_NO)[number];
 
-export interface ICleaningBooking extends Document {
-  size: number;
-  postnummer: string;
-  buildingType: string;
-  floor: string;
-  Access: string;
+type HomeType = "lagenhet" | "Hus" | "forrad" | "kontor";
+type Access = "stairs" | "elevator" | "large-elevator";
+
+export interface ICleaningAddress {
+  postcode: string;
+  homeType: HomeType;
+  floor: string; // "1".."10+"
+  access: Access;
   parkingDistance: number;
-
-  //Extra Serivces
-  Persinner: Number;
-  ExtraBadrum: "Ja" | "Nej";
-  ExtraToalett: "Ja" | "Nej";
-  inglassadDusch: "Ja" | "Nej";
-
-  // Boking Deatiles
-  name: string;
-  email: string;
-  telefon: string;
-  date: string;
-  presonalNumber: string;
-  apartmentKeys: string;
-  message: string;
 }
 
-const cleaningBookingSchema = new Schema<ICleaningBooking>({
-  size: { type: Number, required: true },
-  postnummer: { type: String, required: true },
-  buildingType: { type: String, required: true },
-  floor: { type: String, required: true },
-  Access: { type: String, required: true },
-  parkingDistance: { type: Number, required: true },
-  Persinner: { type: Number, default: 0 },
-  ExtraBadrum: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  ExtraToalett: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  inglassadDusch: { type: String, enum: serivceOptionEnum, default: "Nej" },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  telefon: { type: String, required: true },
-  date: { type: String, required: true },
-  presonalNumber: { type: String, required: true },
-  apartmentKeys: { type: String, required: true },
-  message: { type: String, required: true },
-});
+export interface ICleaningBooking extends Document {
+  // inputs
+  size: number; // m²
+  address: ICleaningAddress; // one address for cleaning
+  // extras (fixed/qty)
+  Persienner?: number; // quantity
+  badrum?: YesNo;
+  toalett?: YesNo;
+  Inglasadduschhörna?: YesNo;
 
-const cleaningModel = mongoose.model<ICleaningBooking>(
-  "Cleaning Booking",
-  cleaningBookingSchema
+  // customer
+  name: string;
+  email: string;
+  phone?: string;
+  personalNumber?: string;
+  message?: string;
+
+  // schedule
+  date: Date;
+
+  // snapshot of the pricing UI
+  priceDetails?: {
+    lines: Array<{ key: string; label: string; amount: number; meta?: string }>;
+    totals: {
+      base: number;
+      extras: number;
+      grandTotal: number;
+    };
+  };
+
+  status: "pending" | "confirmed" | "cancelled";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AddressSchema = new Schema<ICleaningAddress>(
+  {
+    postcode: { type: String, required: true, trim: true },
+    homeType: {
+      type: String,
+      enum: ["lagenhet", "Hus", "forrad", "kontor"],
+      required: true,
+    },
+    floor: { type: String, required: true },
+    access: {
+      type: String,
+      enum: ["stairs", "elevator", "large-elevator"],
+      required: true,
+    },
+    parkingDistance: { type: Number, required: true },
+  },
+  { _id: false }
 );
 
-export default cleaningModel;
+const CleaningBookingSchema = new Schema<ICleaningBooking>(
+  {
+    size: { type: Number, required: true },
+    address: { type: AddressSchema, required: true },
+
+    Persienner: { type: Number, default: 0 },
+    badrum: { type: String, enum: YES_NO, default: "NEJ" },
+    toalett: { type: String, enum: YES_NO, default: "NEJ" },
+    Inglasadduschhörna: { type: String, enum: YES_NO, default: "NEJ" },
+
+    name: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    phone: { type: String, trim: true },
+    personalNumber: { type: String, trim: true },
+    message: { type: String, trim: true },
+
+    date: { type: Date, required: true },
+
+    priceDetails: {
+      lines: [{ key: String, label: String, amount: Number, meta: String }],
+      totals: {
+        base: Number,
+        extras: Number,
+        grandTotal: Number,
+      },
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
+
+const CleaningBookingModel =
+  mongoose.models.CleaningBooking ||
+  mongoose.model<ICleaningBooking>("CleaningBooking", CleaningBookingSchema);
+
+export default CleaningBookingModel;

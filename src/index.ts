@@ -7,11 +7,13 @@ import {
 import pricesRoute from "./routes/pricesRoute";
 import movingRoute from "./routes/movingRoute";
 import cleaningRoute from "./routes/CleaningRoute";
+import cors from "cors";
 
 const app = express();
 const port = 4000;
 
 app.use(express.json());
+app.use(cors());
 
 mongoose
   .connect("mongodb://localhost:27017/swediana")
