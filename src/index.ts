@@ -7,6 +7,7 @@ import {
 import pricesRoute from "./routes/pricesRoute";
 import movingRoute from "./routes/movingRoute";
 import cleaningRoute from "./routes/CleaningRoute";
+import byggRoute from "./routes/byggRoute";
 import cors from "cors";
 
 const app = express();
@@ -27,6 +28,7 @@ mongoose
 app.use("/prices", pricesRoute);
 app.use("/moving", movingRoute);
 app.use("/cleaning", cleaningRoute);
+app.use("/bygg", byggRoute);
 
 seedInitialPrices();
 seedInitialPricesCleaning();

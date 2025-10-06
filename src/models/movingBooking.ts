@@ -38,6 +38,7 @@ export interface IPriceDetails {
 /** ───────────────────────────────────────────────────────────────────── */
 
 export interface IMovingBooking extends Document {
+  bookingNumber: number;
   size: number; // m² or m³
   from: IAddress;
   to: IAddress;
@@ -121,6 +122,8 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
 
 const MovingBookingSchema = new Schema<IMovingBooking>(
   {
+    bookingNumber: { type: Number, unique: true },
+
     size: { type: Number, required: true },
 
     from: { type: AddressSchema, required: true },
@@ -151,6 +154,31 @@ const MovingBookingSchema = new Schema<IMovingBooking>(
   },
   { timestamps: true }
 );
+
+// Pre-save hook to auto-increment bookingNumber
+MovingBookingSchema.pre("save", async function (next) {
+  if (this.isNew) {
+    try {
+      // Find the highest booking number
+      const lastBooking = await mongoose
+        .model<IMovingBooking>("MovingBooking")
+        .findOne()
+        .sort({ bookingNumber: -1 })
+        .select("bookingNumber")
+        .lean();
+
+      // Set the next booking number
+      this.bookingNumber = (lastBooking?.bookingNumber || 0) + 1;
+      next();
+    } catch (error) {
+      next(error as Error);
+    }
+  } else {
+    next();
+  }
+});
+
+MovingBookingSchema.index({ bookingNumber: 1 });
 
 const MovingBookingModel =
   mongoose.models.MovingBooking ||

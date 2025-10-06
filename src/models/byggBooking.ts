@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 const YES_NO = ["JA", "NEJ"] as const;
 type YesNo = (typeof YES_NO)[number];
+
 type HomeType = "lagenhet" | "Hus" | "forrad" | "kontor";
 type Access = "stairs" | "elevator" | "large-elevator";
 
@@ -15,11 +16,10 @@ export interface ICleaningAddress {
 }
 
 export interface ICleaningBooking extends Document {
-  bookingNumber: number; // Auto-incrementing booking number
+  bookingNumber: number;
   // inputs
   size: number; // m²
   address: ICleaningAddress; // one address for cleaning
-
   // extras (fixed/qty)
   Persienner?: number; // quantity
   badrum?: YesNo;
@@ -70,7 +70,7 @@ const AddressSchema = new Schema<ICleaningAddress>(
   { _id: false }
 );
 
-const CleaningBookingSchema = new Schema<ICleaningBooking>(
+const byggBookingSchema = new Schema<ICleaningBooking>(
   {
     bookingNumber: { type: Number, unique: true },
     size: { type: Number, required: true },
@@ -107,8 +107,7 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
   { timestamps: true }
 );
 
-// Pre-save hook to auto-increment bookingNumber
-CleaningBookingSchema.pre("save", async function (next) {
+byggBookingSchema.pre("save", async function (next) {
   if (this.isNew) {
     try {
       // Find the highest booking number
@@ -131,10 +130,10 @@ CleaningBookingSchema.pre("save", async function (next) {
 });
 
 // Create index on bookingNumber for faster lookups
-CleaningBookingSchema.index({ bookingNumber: 1 });
+byggBookingSchema.index({ bookingNumber: 1 });
 
-const CleaningBookingModel =
-  mongoose.models.CleaningBooking ||
-  mongoose.model<ICleaningBooking>("CleaningBooking", CleaningBookingSchema);
+const ByggBookingModel =
+  mongoose.models.ByggBooking ||
+  mongoose.model<ICleaningBooking>("ByggBooking", byggBookingSchema);
 
-export default CleaningBookingModel;
+export default ByggBookingModel;

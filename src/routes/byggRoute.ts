@@ -1,19 +1,19 @@
 import express from "express";
 import {
-  addCleaningBooking,
+  addByggBooking,
   deleteBooking,
-  getCleaningBooking,
-} from "../services/cleaningService";
+  getByggBooking,
+} from "../services/byggService";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const booking = await getCleaningBooking();
+  const booking = await getByggBooking();
   res.status(200).send(booking);
 });
 
 router.post("/", async (req, res) => {
   try {
-    const result = await addCleaningBooking({
+    const result = await addByggBooking({
       size: req.body.size,
       // address (flat)
       postcode: req.body.addressPostnummer,

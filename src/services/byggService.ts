@@ -1,12 +1,12 @@
-import cleaningModel from "../models/cleaningBooking";
-import { CleaningBookingParams } from "../types/CleaningBookingParams";
+import ByggBookingModel from "../models/byggBooking";
+import { ByggBookingParams } from "../types/ByggBookingParams";
 
-export const getCleaningBooking = async () => {
-  return await cleaningModel.find();
+export const getByggBooking = async () => {
+  return await ByggBookingModel.find();
 };
 
-export const addCleaningBooking = async (
-  params: CleaningBookingParams
+export const addByggBooking = async (
+  params: ByggBookingParams
 ): Promise<{
   success: boolean;
   data?: any;
@@ -22,7 +22,7 @@ export const addCleaningBooking = async (
     const normalizedEmail = String(params.email).trim().toLowerCase();
 
     // Optional duplicate rule: same email + exact date
-    const dup = await cleaningModel.findOne({
+    const dup = await ByggBookingModel.findOne({
       email: normalizedEmail,
       date: when,
     });
@@ -33,7 +33,7 @@ export const addCleaningBooking = async (
       };
     }
 
-    const doc = new cleaningModel({
+    const doc = new ByggBookingModel({
       size: params.size,
       address: {
         postcode: params.postcode,
@@ -66,10 +66,10 @@ export const addCleaningBooking = async (
     });
 
     const saved = await doc.save();
-    console.log(doc.bookingNumber);
     return { success: true, data: saved };
   } catch (error: any) {
     console.error("Error saving cleaning booking:", error);
+    console.log(params.postcode);
     return {
       success: false,
       message: "Something went wrong",
@@ -80,7 +80,7 @@ export const addCleaningBooking = async (
 
 export const deleteBooking = async ({ id }: { id: string }) => {
   try {
-    const result = await cleaningModel.findByIdAndDelete(id);
+    const result = await ByggBookingModel.findByIdAndDelete(id);
 
     if (!result) {
       return { message: "Bokning hittades inte", statusCode: 404 };

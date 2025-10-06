@@ -1,7 +1,7 @@
 // types/CleaningBookingParams.ts
 export type YesNo = "JA" | "NEJ";
 
-export interface CleaningBookingParams {
+export interface ByggBookingParams {
   // base inputs
   size: number; // m²
 
