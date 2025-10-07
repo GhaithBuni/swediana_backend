@@ -1,6 +1,7 @@
 import movingBookingModel from "../models/movingBooking";
 
 export const getMovingBooking = async () => {
+  console.log("Fetching moving bookings");
   return await movingBookingModel.find();
 };
 

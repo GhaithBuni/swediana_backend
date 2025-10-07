@@ -4,9 +4,11 @@ import {
   deleteBooking,
   getMovingBooking,
 } from "../services/movingService";
+import validateJWT from "../middlewares/validateJWT";
+import { getCleaningBookingid } from "../services/cleaningService";
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", validateJWT, async (req, res) => {
   const booking = await getMovingBooking();
   res.status(200).send(booking);
 });

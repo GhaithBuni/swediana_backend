@@ -1,5 +1,7 @@
+require("dotenv").config(); // Load environment variables
 import adminModel from "../models/adminModel";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 interface adminParams {
   username: string;
@@ -22,7 +24,6 @@ export const registerAdmin = async ({ username, password }: adminParams) => {
 
 export const login = async ({ username, password }: adminParams) => {
   const findAdmin = await adminModel.findOne({ username });
-
   if (!findAdmin) {
     return { data: "Admin not found", statusCode: 404 };
   }
@@ -32,5 +33,21 @@ export const login = async ({ username, password }: adminParams) => {
     return { data: "Invalid credentials", statusCode: 401 };
   }
 
-  return { data: "Login successful", statusCode: 200 };
+  const token = jwt.sign(
+    {
+      userId: findAdmin._id.toString(), // ✅ Now TypeScript knows about toString()
+      username: findAdmin.username,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: "24h" }
+  );
+
+  return {
+    data: {
+      message: "Login successful",
+      token,
+      user: { username: findAdmin.username },
+    },
+    statusCode: 200,
+  };
 };

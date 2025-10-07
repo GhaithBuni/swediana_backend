@@ -4,6 +4,29 @@ import { CleaningBookingParams } from "../types/CleaningBookingParams";
 export const getCleaningBooking = async () => {
   return await cleaningModel.find();
 };
+interface GetParams {
+  id: string;
+}
+
+export const getCleaningBookingid = async ({ id }: GetParams) => {
+  return await cleaningModel.findById(id);
+};
+
+interface DeleteParams {
+  id: string;
+}
+
+export const deleteCleaningBooking = async ({ id }: DeleteParams) => {
+  try {
+    const result = await cleaningModel.findByIdAndDelete(id);
+    if (!result) {
+      return { message: "bokning hittades inte", statusCode: 404 };
+    }
+    return { message: "Bokning raderad", statusCode: 200 };
+  } catch (err) {
+    console.error("Error in Delete Booking", err);
+  }
+};
 
 export const addCleaningBooking = async (
   params: CleaningBookingParams
