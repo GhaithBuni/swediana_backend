@@ -35,6 +35,7 @@ export interface ICleaningBooking extends Document {
 
   // schedule
   date: Date;
+  time: string;
 
   // snapshot of the pricing UI
   priceDetails?: {
@@ -88,6 +89,7 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
     message: { type: String, trim: true },
 
     date: { type: Date, required: true },
+    time: { type: String },
 
     priceDetails: {
       lines: [{ key: String, label: String, amount: Number, meta: String }],

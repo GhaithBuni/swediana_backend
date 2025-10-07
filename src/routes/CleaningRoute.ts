@@ -25,11 +25,13 @@ router.patch("/:id", validateJWT, async (req, res) => {
     const payload: any = {};
 
     if (req.body.date) {
-      const when = new Date(req.body.date);
+      const when = new Date(req.body.date); // ISO with time
       if (isNaN(when.getTime()))
         return res.status(400).json({ message: "Invalid date" });
       payload.date = when;
     }
+    if (req.body.time) payload.time = String(req.body.time).trim();
+
     if (typeof req.body.email === "string")
       payload.email = String(req.body.email).trim().toLowerCase();
     if (typeof req.body.phone === "string")
