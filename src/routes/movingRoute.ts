@@ -3,14 +3,74 @@ import {
   addBooking,
   deleteBooking,
   getMovingBooking,
+  getMovingBookingid,
 } from "../services/movingService";
 import validateJWT from "../middlewares/validateJWT";
-import { getCleaningBookingid } from "../services/cleaningService";
+import MovingBookingModel from "../models/movingBooking";
 const router = express.Router();
 
 router.get("/", validateJWT, async (req, res) => {
   const booking = await getMovingBooking();
   res.status(200).send(booking);
+});
+
+router.get("/:id", validateJWT, async (req, res) => {
+  const { id } = req.params;
+  const booking = await getMovingBookingid({ id });
+  res.status(200).send(booking);
+});
+
+// routes/moving.ts
+router.patch("/:id", validateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload: any = {};
+
+    const $set: any = {};
+
+    if (req.body.date) {
+      const when = new Date(req.body.date); // ISO with time
+      if (isNaN(when.getTime()))
+        return res.status(400).json({ message: "Invalid date" });
+      payload.date = when;
+    }
+    if (req.body.time) payload.time = String(req.body.time).trim();
+    if (typeof req.body.email === "string")
+      payload.email = String(req.body.email).trim().toLowerCase();
+    if (typeof req.body.phone === "string")
+      payload.phone = String(req.body.phone).trim();
+    if (typeof req.body.size !== "undefined")
+      payload.size = Number(req.body.size);
+    if (
+      req.body.status &&
+      ["pending", "confirmed", "cancelled"].includes(req.body.status)
+    ) {
+      payload.status = req.body.status;
+    }
+
+    if (req.body.priceDetails?.totals) {
+      const t = req.body.priceDetails.totals;
+      payload["priceDetails.totals"] = {
+        movingBase: Number(t.movingBase ?? 0),
+        movingExtras: Number(t.movingExtras ?? 0),
+        cleaningBaseAfterDiscount: Number(t.cleaningBaseAfterDiscount ?? 0),
+        cleaningExtras: Number(t.cleaningExtras ?? 0),
+        grandTotal: Number(t.grandTotal ?? 0),
+      };
+    }
+    const updated = await MovingBookingModel.findByIdAndUpdate(
+      id,
+      { $set: payload },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!updated)
+      return res.status(404).json({ message: "Moving booking not found" });
+    res.status(200).json({ booking: updated });
+  } catch (err) {
+    console.error("Update extras error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 router.post("/", async (req, res) => {
@@ -44,6 +104,7 @@ router.post("/", async (req, res) => {
       presonalNumber: req.body.personalNumber, // keep spelling if helper expects it
       apartmentKeys: req.body.apartmentKeys,
       message: req.body.message,
+      addressStreet: req.body.addressStreet,
     });
 
     if (!result?.success) {

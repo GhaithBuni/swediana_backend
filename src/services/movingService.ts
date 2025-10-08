@@ -5,6 +5,14 @@ export const getMovingBooking = async () => {
   return await movingBookingModel.find();
 };
 
+interface GetParams {
+  id: string;
+}
+
+export const getMovingBookingid = async ({ id }: GetParams) => {
+  return await movingBookingModel.findById(id);
+};
+
 interface BookingParams {
   size: number;
   postnummer: string;
@@ -30,6 +38,8 @@ interface BookingParams {
   presonalNumber?: string;
   apartmentKeys?: string;
   message?: string;
+  addressStreet: string;
+
   priceDetails?: {
     lines: { key: string; label: string; amount: number; meta?: string }[];
     totals: {
@@ -98,6 +108,7 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       personalNumber: params.presonalNumber,
       apartmentKeys: params.apartmentKeys,
       message: params.message,
+      addressStreet: params.addressStreet,
       date: when,
 
       /** snapshot straight from client (already computed by your store) */

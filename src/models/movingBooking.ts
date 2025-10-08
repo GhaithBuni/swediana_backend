@@ -57,9 +57,12 @@ export interface IMovingBooking extends Document {
   apartmentKeys?: string;
   whatToMove?: string;
   message?: string;
+  addressStreet: string;
 
   // Booking date/time
   date: Date;
+  time: string;
+
   status: "pending" | "confirmed" | "cancelled";
 
   /** Price snapshot at booking time */
@@ -141,8 +144,10 @@ const MovingBookingSchema = new Schema<IMovingBooking>(
     apartmentKeys: { type: String, trim: true },
     whatToMove: { type: String, trim: true },
     message: { type: String, trim: true },
+    addressStreet: { type: String, required: true },
 
     date: { type: Date, required: true },
+    time: { type: String },
     status: {
       type: String,
       enum: ["pending", "confirmed", "cancelled"],
