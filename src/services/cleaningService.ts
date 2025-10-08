@@ -78,6 +78,7 @@ export const addCleaningBooking = async (
       phone: params.phone ?? "",
       personalNumber: params.personalNumber ?? "",
       message: params.message ?? "",
+      addressStreet: params.addressStreet ?? "",
 
       // schedule
       date: when,

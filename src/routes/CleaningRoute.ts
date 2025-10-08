@@ -9,7 +9,7 @@ import validateJWT from "../middlewares/validateJWT";
 import CleaningBookingModel from "../models/cleaningBooking";
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", validateJWT, async (req, res) => {
   const booking = await getCleaningBooking();
   res.status(200).send(booking);
 });
@@ -38,6 +38,8 @@ router.patch("/:id", validateJWT, async (req, res) => {
       payload.phone = String(req.body.phone).trim();
     if (typeof req.body.size !== "undefined")
       payload.size = Number(req.body.size);
+    if (typeof req.body.addressStreet === "string")
+      payload.addressStreet = String(req.body.addressStreet).trim();
 
     if (
       req.body.status &&
@@ -93,6 +95,7 @@ router.post("/", async (req, res) => {
       date: req.body.date,
       personalNumber: req.body.personalNumber,
       message: req.body.message,
+      addressStreet: req.body.addressStreet,
 
       // optional UI snapshot
       priceDetails: req.body.priceDetails,
@@ -109,7 +112,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", validateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const data = await deleteBooking({ id });

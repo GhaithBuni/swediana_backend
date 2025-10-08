@@ -25,6 +25,7 @@ export interface CleaningBookingParams {
   date: string; // parse to Date in helper
   personalNumber?: string;
   message?: string;
+  addressStreet?: string;
 
   // price snapshot from UI (optional)
   priceDetails?: {

@@ -32,6 +32,7 @@ export interface ICleaningBooking extends Document {
   phone?: string;
   personalNumber?: string;
   message?: string;
+  addressStreet: string;
 
   // schedule
   date: Date;
@@ -87,6 +88,7 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
     phone: { type: String, required: true },
     personalNumber: { type: String, required: true },
     message: { type: String, trim: true },
+    addressStreet: { type: String, required: true },
 
     date: { type: Date, required: true },
     time: { type: String },
