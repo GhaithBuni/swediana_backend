@@ -7,6 +7,7 @@ import {
 } from "../services/movingService";
 import validateJWT from "../middlewares/validateJWT";
 import MovingBookingModel from "../models/movingBooking";
+import { sendConfirmationEmailMoving } from "../services/confiramtionServiceMoving";
 const router = express.Router();
 
 router.get("/", validateJWT, async (req, res) => {
@@ -125,6 +126,12 @@ router.delete("/:id", async (req, res) => {
     console.error("Delete booking error:", err);
     return res.status(500).send({ message: "Internal server error" });
   }
+});
+
+router.post("/send-confirmation/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = await sendConfirmationEmailMoving({ id });
+  return res.status(data.statusCode || 500).send({ message: data.message });
 });
 
 export default router;

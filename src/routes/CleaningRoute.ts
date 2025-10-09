@@ -8,6 +8,8 @@ import {
 import validateJWT from "../middlewares/validateJWT";
 import CleaningBookingModel from "../models/cleaningBooking";
 import lockedDateService from "../services/lockedDateService";
+import { send } from "process";
+import { sendConfirmationEmailCleaning } from "../services/confiramtionService";
 const router = express.Router();
 
 router.get("/", validateJWT, async (req, res) => {
@@ -187,6 +189,12 @@ router.delete("/:id", validateJWT, async (req, res) => {
     console.error("Delete booking error:", err);
     return res.status(500).send({ message: "Internal server error" });
   }
+});
+
+router.post("/send-confirmation/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = await sendConfirmationEmailCleaning({ id });
+  return res.status(data.statusCode || 500).send({ message: data.message });
 });
 
 export default router;
