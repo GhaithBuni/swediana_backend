@@ -1,4 +1,5 @@
 import movingBookingModel from "../models/movingBooking";
+import { validateDiscountCode } from "./discountService";
 
 export const getMovingBooking = async () => {
   console.log("Fetching moving bookings");
@@ -39,6 +40,7 @@ interface BookingParams {
   apartmentKeys?: string;
   message?: string;
   addressStreet: string;
+  discountCode?: string;
 
   priceDetails?: {
     lines: { key: string; label: string; amount: number; meta?: string }[];
@@ -47,6 +49,8 @@ interface BookingParams {
       movingExtras: number;
       cleaningBaseAfterDiscount: number;
       cleaningExtras: number;
+      subtotal?: number;
+      discount?: number;
       grandTotal: number;
       currency?: "SEK";
     };
@@ -77,6 +81,63 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       };
     }
 
+    // Handle discount code validation
+    let discountAmount = 0;
+    let discountCodeId = null;
+    let validatedDiscountCode = null;
+    let finalPriceDetails = params.priceDetails;
+
+    if (params.discountCode) {
+      const baseTotal = params.priceDetails?.totals?.grandTotal || 0;
+
+      const validation = await validateDiscountCode(
+        params.discountCode,
+        baseTotal,
+        "moving"
+      );
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          message: validation.error || "Ogiltig rabattkod",
+        };
+      }
+
+      discountAmount = validation.discountAmount!;
+      discountCodeId = validation.discount!._id;
+      validatedDiscountCode = params.discountCode.toUpperCase();
+
+      // Recalculate totals with discount
+      const subtotal = baseTotal;
+      const newBase = Math.max(0, subtotal - discountAmount);
+
+      finalPriceDetails = {
+        ...params.priceDetails,
+        lines: [
+          ...(params.priceDetails?.lines || []),
+          {
+            key: "discount",
+            label: `Rabattkod (${validatedDiscountCode})`,
+            amount: -discountAmount,
+            meta:
+              validation.discount!.type === "percentage"
+                ? `${validation.discount!.value}%`
+                : undefined,
+          },
+        ],
+        totals: {
+          movingBase: newBase,
+          movingExtras: params.priceDetails?.totals?.movingExtras || 0,
+          cleaningBaseAfterDiscount:
+            params.priceDetails?.totals?.cleaningBaseAfterDiscount || 0,
+          cleaningExtras: params.priceDetails?.totals?.cleaningExtras || 0,
+          subtotal: subtotal,
+          discount: discountAmount,
+          grandTotal: params.priceDetails?.totals?.grandTotal || 0,
+        },
+      };
+    }
+
     const booking = new movingBookingModel({
       size: params.size,
       from: {
@@ -97,6 +158,11 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       packaKitchen: params.packaKitchen ?? "NEJ",
       montera: params.mounting,
       flyttstad: params.cleaningOption,
+
+      // discount fields
+      discountCode: validatedDiscountCode,
+      discountCodeId: discountCodeId,
+      discountAmount: discountAmount,
       // disposal/storage if you add them:
       // disposal: params.Disposal,
       // storage: params.Storage,

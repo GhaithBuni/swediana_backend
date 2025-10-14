@@ -19,6 +19,9 @@ export interface ICleaningBooking extends Document {
   // inputs
   size: number; // m²
   address: ICleaningAddress; // one address for cleaning
+  discountCode?: string; // the actual code used (e.g., "SUMMER2024")
+  discountCodeId?: mongoose.Types.ObjectId; // reference to DiscountCode
+  discountAmount?: number; // calculated discount amount applied
 
   // extras (fixed/qty)
   Persienner?: number; // quantity
@@ -44,6 +47,8 @@ export interface ICleaningBooking extends Document {
     totals: {
       base: number;
       extras: number;
+      subtotal: number; // add this
+      discount: number; // add this
       grandTotal: number;
     };
   };
@@ -89,6 +94,9 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
     personalNumber: { type: String, required: true },
     message: { type: String, trim: true },
     addressStreet: { type: String, required: true },
+    discountCode: { type: String, uppercase: true, trim: true },
+    discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
+    discountAmount: { type: Number, default: 0 },
 
     date: { type: Date, required: true },
     time: { type: String },
@@ -98,6 +106,8 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
       totals: {
         base: Number,
         extras: Number,
+        subtotal: Number,
+        discount: Number,
         grandTotal: Number,
       },
     },

@@ -23,9 +23,11 @@ export interface CleaningBookingParams {
   email: string;
   phone?: string;
   date: string; // parse to Date in helper
+  time?: string;
   personalNumber?: string;
   message?: string;
   addressStreet?: string;
+  discountCode?: string;
 
   // price snapshot from UI (optional)
   priceDetails?: {
@@ -33,6 +35,8 @@ export interface CleaningBookingParams {
     totals: {
       base: number;
       extras: number;
+      subtotal?: number;
+      discount?: number;
       grandTotal: number;
       currency?: "SEK";
     };

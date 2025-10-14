@@ -79,28 +79,28 @@ router.post("/", async (req, res) => {
     // If your addBooking expects flat fields (fromPostnummer, etc.), pass req.body as-is.
     const result = await addBooking({
       size: req.body.size,
-      postnummer: req.body.fromPostnummer,
-      postNummerTo: req.body.toPostnummer,
-      buildingType: req.body.fromHomeType,
-      floor: req.body.fromFloor,
-      Access: req.body.fromAccess,
-      parkingDistance: req.body.fromParkingDistance,
-      buildingTypeNew: req.body.toHomeType,
-      floorNew: req.body.toFloor,
-      AccessNew: req.body.toAccess,
-      parkingDistanceNew: req.body.toParkingDistance,
+      postnummer: req.body.postnummer,
+      postNummerTo: req.body.postNummerTo,
+      buildingType: req.body.buildingType,
+      floor: req.body.floor,
+      Access: req.body.Access,
+      parkingDistance: req.body.parkingDistance,
+      buildingTypeNew: req.body.buildingTypeNew,
+      floorNew: req.body.floorNew,
+      AccessNew: req.body.AccessNew,
+      parkingDistanceNew: req.body.parkingDistanceNew,
       priceDetails: req.body.priceDetails,
 
       // extras (map names to what addBooking expects)
-      packaging: req.body.packa,
-      mounting: req.body.montera,
+      packaging: req.body.packaging,
+      mounting: req.body.mounting,
       cleaningOption: req.body.flyttstad,
       packaKitchen: req.body.packaKitchen,
 
       whatToMove: req.body.whatToMove,
       name: req.body.name,
       email: req.body.email,
-      telefon: req.body.phone,
+      telefon: req.body.telefon,
       date: req.body.date, // you can convert to Date inside helper
       presonalNumber: req.body.personalNumber, // keep spelling if helper expects it
       apartmentKeys: req.body.apartmentKeys,

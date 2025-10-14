@@ -25,6 +25,7 @@ export interface ByggBookingParams {
   date: string; // parse to Date in helper
   personalNumber?: string;
   message?: string;
+  discountCode?: string;
 
   // price snapshot from UI (optional)
   priceDetails?: {
@@ -33,6 +34,8 @@ export interface ByggBookingParams {
       base: number;
       extras: number;
       grandTotal: number;
+      subtotal?: number;
+      discount?: number;
       currency?: "SEK";
     };
   };

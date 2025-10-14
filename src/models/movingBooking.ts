@@ -42,7 +42,9 @@ export interface IMovingBooking extends Document {
   size: number; // m² or m³
   from: IAddress;
   to: IAddress;
-
+  discountCode?: string; // the actual code used (e.g., "SUMMER2024")
+  discountCodeId?: mongoose.Types.ObjectId; // reference to DiscountCode
+  discountAmount?: number; // calculated discount amount applied
   // Extra services (simple JA/NEJ flags)
   packa: YesNo;
   packaKitchen: YesNo;
@@ -96,7 +98,7 @@ const PriceLineSchema = new Schema<IPriceLine>(
   {
     key: { type: String, required: true, trim: true },
     label: { type: String, required: true, trim: true },
-    amount: { type: Number, required: true, min: 0 },
+    amount: { type: Number, required: true },
     meta: { type: String, trim: true },
   },
   { _id: false }
@@ -145,6 +147,9 @@ const MovingBookingSchema = new Schema<IMovingBooking>(
     whatToMove: { type: String, trim: true },
     message: { type: String, trim: true },
     addressStreet: { type: String, required: true },
+    discountCode: { type: String, uppercase: true, trim: true },
+    discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
+    discountAmount: { type: Number, default: 0 },
 
     date: { type: Date, required: true },
     time: { type: String },

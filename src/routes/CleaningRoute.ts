@@ -144,11 +144,11 @@ router.post("/", async (req, res) => {
     const result = await addCleaningBooking({
       size: req.body.size,
       // address (flat)
-      postcode: req.body.addressPostnummer,
-      homeType: req.body.addressHomeType,
-      floor: req.body.addressFloor,
-      Access: req.body.addressAccess,
-      parkingDistance: req.body.addressParkingDistance,
+      postcode: req.body.postcode,
+      homeType: req.body.homeType,
+      floor: req.body.floor,
+      Access: req.body.Access,
+      parkingDistance: req.body.parkingDistance,
 
       // extras
       Persienner: req.body.Persienner,
@@ -164,6 +164,8 @@ router.post("/", async (req, res) => {
       personalNumber: req.body.personalNumber,
       message: req.body.message,
       addressStreet: req.body.addressStreet,
+
+      discountCode: req.body.discountCode,
 
       // optional UI snapshot
       priceDetails: req.body.priceDetails,
