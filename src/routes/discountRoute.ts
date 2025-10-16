@@ -130,7 +130,7 @@ router.post("/create-discount", async (req, res) => {
 });
 
 // Get all discount codes
-router.get("/discounts", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const discounts = await DiscountCodeModel.find().sort({ createdAt: -1 });
     return res.json({
@@ -209,7 +209,7 @@ router.put("/discounts/:id", async (req, res) => {
 });
 
 // Delete discount code
-router.delete("/discounts/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 

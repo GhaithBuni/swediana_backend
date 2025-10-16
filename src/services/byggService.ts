@@ -4,6 +4,12 @@ import { ByggBookingParams } from "../types/ByggBookingParams";
 export const getByggBooking = async () => {
   return await ByggBookingModel.find();
 };
+interface GetParams {
+  id: string;
+}
+export const getByggBookingid = async ({ id }: GetParams) => {
+  return await ByggBookingModel.findById(id);
+};
 
 export const addByggBooking = async (
   params: ByggBookingParams

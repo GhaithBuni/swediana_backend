@@ -3,11 +3,19 @@ import {
   addByggBooking,
   deleteBooking,
   getByggBooking,
+  getByggBookingid,
 } from "../services/byggService";
+import ByggBookingModel from "../models/byggBooking";
+import validateJWT from "../middlewares/validateJWT";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   const booking = await getByggBooking();
+  res.status(200).send(booking);
+});
+router.get("/:id", validateJWT, async (req, res) => {
+  const { id } = req.params;
+  const booking = await getByggBookingid({ id });
   res.status(200).send(booking);
 });
 
@@ -48,6 +56,58 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("Error creating cleaning booking:", err);
     return res.status(500).json({ error: "Could not create cleaning booking" });
+  }
+});
+
+router.patch("/:id", validateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload: any = {};
+
+    if (req.body.date) {
+      const when = new Date(req.body.date); // ISO with time
+      if (isNaN(when.getTime()))
+        return res.status(400).json({ message: "Invalid date" });
+      payload.date = when;
+    }
+    if (req.body.time) payload.time = String(req.body.time).trim();
+
+    if (typeof req.body.email === "string")
+      payload.email = String(req.body.email).trim().toLowerCase();
+    if (typeof req.body.phone === "string")
+      payload.phone = String(req.body.phone).trim();
+    if (typeof req.body.size !== "undefined")
+      payload.size = Number(req.body.size);
+    if (typeof req.body.addressStreet === "string")
+      payload.addressStreet = String(req.body.addressStreet).trim();
+
+    if (
+      req.body.status &&
+      ["pending", "confirmed", "cancelled"].includes(req.body.status)
+    ) {
+      payload.status = req.body.status;
+    }
+    if (req.body.priceDetails?.totals) {
+      const t = req.body.priceDetails.totals;
+      payload["priceDetails.totals"] = {
+        base: Number(t.base ?? 0),
+        extras: Number(t.extras ?? 0),
+        grandTotal: Number(t.grandTotal ?? 0),
+      };
+    }
+
+    const updated = await ByggBookingModel.findByIdAndUpdate(
+      id,
+      { $set: payload },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!updated)
+      return res.status(404).json({ message: "Cleaning booking not found" });
+    return res.status(200).json({ booking: updated });
+  } catch (err) {
+    console.error("Update cleaning booking error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
