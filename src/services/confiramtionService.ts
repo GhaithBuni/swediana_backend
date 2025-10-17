@@ -1,3 +1,4 @@
+import ByggBookingModel from "../models/byggBooking";
 import CleaningBookingModel from "../models/cleaningBooking";
 import nodemailer from "nodemailer";
 
@@ -207,6 +208,53 @@ export const sendConfirmationEmailCleaning = async ({
 }: ConfirmationEmailData) => {
   try {
     const booking = await CleaningBookingModel.findById(id);
+    if (!booking) {
+      return { success: false, message: "Booking not found", statusCode: 404 };
+    }
+
+    const html = buildEmailHtml(booking);
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const subject = `Bokningsbekräftelse #${
+      booking.bookingNumber
+    } – Flyttstäd ${formatDateSE(booking.date)} kl ${booking.time}`;
+
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: booking.email,
+      subject,
+      html,
+    });
+
+    return {
+      success: true,
+      message: "Email sent successfully",
+      statusCode: 200,
+    };
+  } catch (err) {
+    console.error("Error sending confirmation email:", err);
+    return {
+      success: false,
+      message: "Failed to send confirmation email",
+      statusCode: 500,
+    };
+  }
+};
+
+export const sendConfirmationEmailBygg = async ({
+  id,
+}: ConfirmationEmailData) => {
+  try {
+    const booking = await ByggBookingModel.findById(id);
     if (!booking) {
       return { success: false, message: "Booking not found", statusCode: 404 };
     }

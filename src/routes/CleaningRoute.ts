@@ -7,8 +7,7 @@ import {
 } from "../services/cleaningService";
 import validateJWT from "../middlewares/validateJWT";
 import CleaningBookingModel from "../models/cleaningBooking";
-import lockedDateService from "../services/lockedDateService";
-import { send } from "process";
+import lockedDateService from "../services/lockedDateCleaningService";
 import { sendConfirmationEmailCleaning } from "../services/confiramtionService";
 const router = express.Router();
 
@@ -21,16 +20,6 @@ router.get("/:id", validateJWT, async (req, res) => {
   const booking = await getCleaningBookingid({ id });
   res.status(200).send(booking);
 });
-
-// router.get("/locked-dates", async (req, res) => {
-//   try {
-//     const dates = await lockedDateService.getFutureLockedDates();
-//     res.json(dates);
-//   } catch (error) {
-//     console.error("Error fetching locked dates:", error);
-//     res.status(500).json({ error: "Failed to fetch locked dates" });
-//   }
-// });
 
 router.post("/locked-dates", async (req, res) => {
   try {

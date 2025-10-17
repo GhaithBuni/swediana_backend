@@ -1,5 +1,6 @@
 import ByggBookingModel from "../models/byggBooking";
 import { ByggBookingParams } from "../types/ByggBookingParams";
+import { validateDiscountCode } from "./discountService";
 
 export const getByggBooking = async () => {
   return await ByggBookingModel.find();
@@ -39,6 +40,59 @@ export const addByggBooking = async (
       };
     }
 
+    let discountAmount = 0;
+    let discountCodeId = null;
+    let validatedDiscountCode = null;
+    let finalPriceDetails = params.priceDetails;
+
+    if (params.discountCode) {
+      const originalBase = params.priceDetails?.totals?.base || 0;
+
+      const validation = await validateDiscountCode(
+        params.discountCode,
+        originalBase,
+        "cleaning"
+      );
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          message: validation.error || "Ogiltig rabattkod",
+        };
+      }
+
+      discountAmount = validation.discountAmount!;
+      discountCodeId = validation.discount!._id;
+      validatedDiscountCode = params.discountCode.toUpperCase();
+
+      // Recalculate totals with discount
+      const subtotal = originalBase;
+      const newBase = Math.max(0, subtotal - discountAmount);
+
+      finalPriceDetails = {
+        ...params.priceDetails,
+        lines: [
+          ...(params.priceDetails?.lines || []),
+          {
+            key: "discount",
+            label: `Rabattkod (${validatedDiscountCode})`,
+            amount: -discountAmount,
+            meta:
+              validation.discount!.type === "percentage"
+                ? `${validation.discount!.value}%`
+                : undefined,
+          },
+        ],
+        totals: {
+          base: newBase,
+          extras: params.priceDetails?.totals?.extras || 0,
+          subtotal: subtotal,
+          discount: discountAmount,
+          grandTotal: params.priceDetails?.totals?.grandTotal || 0,
+        },
+      };
+    }
+
     const doc = new ByggBookingModel({
       size: params.size,
       address: {
@@ -61,10 +115,15 @@ export const addByggBooking = async (
       phone: params.phone ?? "",
       personalNumber: params.personalNumber ?? "",
       message: params.message ?? "",
+      addressStreet: params.addressStreet ?? "",
 
       // schedule
       date: when,
+      time: params.time ?? "",
 
+      discountCode: validatedDiscountCode,
+      discountCodeId: discountCodeId,
+      discountAmount: discountAmount,
       // optional snapshot (already computed on client)
       priceDetails: params.priceDetails,
 

@@ -8,6 +8,8 @@ type HomeType = "lagenhet" | "Hus" | "forrad" | "kontor";
 type Access = "stairs" | "elevator" | "large-elevator";
 
 export interface ICleaningAddress {
+  bookingNumber: number; // Auto-incrementing booking number
+
   postcode: string;
   homeType: HomeType;
   floor: string; // "1".."10+"
@@ -20,6 +22,9 @@ export interface ICleaningBooking extends Document {
   // inputs
   size: number; // m²
   address: ICleaningAddress; // one address for cleaning
+  discountCode?: string; // the actual code used (e.g., "SUMMER2024")
+  discountCodeId?: mongoose.Types.ObjectId; // reference to DiscountCode
+  discountAmount?: number; // calculated discount amount applied
   // extras (fixed/qty)
   Persienner?: number; // quantity
   badrum?: YesNo;
@@ -32,9 +37,11 @@ export interface ICleaningBooking extends Document {
   phone?: string;
   personalNumber?: string;
   message?: string;
+  addressStreet: string;
 
   // schedule
   date: Date;
+  time: string;
 
   // snapshot of the pricing UI
   priceDetails?: {
@@ -42,6 +49,8 @@ export interface ICleaningBooking extends Document {
     totals: {
       base: number;
       extras: number;
+      subtotal: number; // add this
+      discount: number; // add this
       grandTotal: number;
     };
   };
@@ -86,14 +95,21 @@ const byggBookingSchema = new Schema<ICleaningBooking>(
     phone: { type: String, required: true },
     personalNumber: { type: String, required: true },
     message: { type: String, trim: true },
+    addressStreet: { type: String, required: true },
+    discountCode: { type: String, uppercase: true, trim: true },
+    discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
+    discountAmount: { type: Number, default: 0 },
 
     date: { type: Date, required: true },
+    time: { type: String },
 
     priceDetails: {
       lines: [{ key: String, label: String, amount: Number, meta: String }],
       totals: {
         base: Number,
         extras: Number,
+        subtotal: Number,
+        discount: Number,
         grandTotal: Number,
       },
     },

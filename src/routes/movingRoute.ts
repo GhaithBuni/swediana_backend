@@ -8,6 +8,7 @@ import {
 import validateJWT from "../middlewares/validateJWT";
 import MovingBookingModel from "../models/movingBooking";
 import { sendConfirmationEmailMoving } from "../services/confiramtionServiceMoving";
+import lockedDateService from "../services/lockedDateService";
 const router = express.Router();
 
 router.get("/", validateJWT, async (req, res) => {
@@ -132,6 +133,61 @@ router.post("/send-confirmation/:id", async (req, res) => {
   const { id } = req.params;
   const data = await sendConfirmationEmailMoving({ id });
   return res.status(data.statusCode || 500).send({ message: data.message });
+});
+
+router.post("/locked-dates", async (req, res) => {
+  try {
+    const { date } = req.body;
+    const result = await lockedDateService.addLockedDate(date);
+
+    res.status(201).json({
+      message: "Date locked successfully",
+      ...result,
+    });
+  } catch (error: any) {
+    if (error.message.includes("Invalid date")) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.message.includes("past")) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.code === 11000) {
+      return res.status(409).json({ error: "This date is already locked" });
+    }
+    console.error("Error locking date:", error);
+    res.status(500).json({ error: "Failed to lock date" });
+  }
+});
+
+router.delete("/locked-dates/:date", async (req, res) => {
+  try {
+    const { date } = req.params;
+    const result = await lockedDateService.removeLockedDate(date);
+
+    res.json({
+      message: "Date unlocked successfully",
+      ...result,
+    });
+  } catch (error: any) {
+    if (error.message.includes("Invalid date")) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.message.includes("not found")) {
+      return res.status(404).json({ error: error.message });
+    }
+    console.error("Error unlocking date:", error);
+    res.status(500).json({ error: "Failed to unlock date" });
+  }
+});
+
+router.get("/locked-dates/all", async (req, res) => {
+  try {
+    const dates = await lockedDateService.getAllLockedDates();
+    res.json(dates);
+  } catch (error) {
+    console.error("Error fetching all locked dates:", error);
+    res.status(500).json({ error: "Failed to fetch locked dates" });
+  }
 });
 
 export default router;
