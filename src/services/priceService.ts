@@ -2,8 +2,36 @@ require("dotenv").config(); // Load environment variables
 
 import cleanPriceModel from "../models/cleaningPriceModel";
 import priceModel from "../models/priceModel";
+import { FilterQuery } from "mongoose";
 const axios = require("axios");
 const originDistance = "75430";
+const SINGLETON_FILTER: FilterQuery<any> = {}; // we’ll use the first+only document
+
+type ExtraServices = {
+  packagingAllRooms: number;
+  packagingKitchen: number;
+  mounting: number;
+};
+
+type PricePayload = {
+  pricePerKvm: number;
+  travelFee: number;
+  fixedPrice: number;
+  extraServices: ExtraServices[]; // we’ll accept an array; use first entry
+};
+
+type ExtraServicesCleaning = {
+  Persinner: number;
+  ExtraBadrum: number;
+  ExtraToalett: number;
+  inglassadDusch: number;
+};
+
+type CleanPricePayload = {
+  pricePerKvm: number;
+  fixedPrice: number;
+  extraServices: ExtraServicesCleaning[]; // use first entry
+};
 
 export const getPrices = async () => {
   return await priceModel.find();
@@ -241,3 +269,90 @@ export const calculatePriceCleaning = async ({ size }: calculateCleaning) => {
     return { data: "Ett oväntat fel inträffade", statusCode: 500 };
   }
 };
+
+export async function getOrCreatePrice() {
+  let doc: any = await priceModel.findOne(SINGLETON_FILTER).lean();
+  if (!doc) {
+    const saved = await new priceModel({
+      pricePerKvm: 0,
+      travelFee: 0,
+      fixedPrice: 0,
+      extraServices: [
+        { packagingAllRooms: 0, packagingKitchen: 0, mounting: 0 },
+      ],
+    }).save();
+    doc = saved.toObject() as any;
+  }
+  return doc;
+}
+
+export async function updatePrice(payload: PricePayload) {
+  // Basic sanity checks
+  const esc = payload.extraServices?.[0] ?? {
+    packagingAllRooms: 0,
+    packagingKitchen: 0,
+    mounting: 0,
+  };
+
+  const update = {
+    pricePerKvm: Number(payload.pricePerKvm) || 0,
+    travelFee: Number(payload.travelFee) || 0,
+    fixedPrice: Number(payload.fixedPrice) || 0,
+    extraServices: [
+      {
+        packagingAllRooms: Number(esc.packagingAllRooms) || 0,
+        packagingKitchen: Number(esc.packagingKitchen) || 0,
+        mounting: Number(esc.mounting) || 0,
+      },
+    ],
+  };
+
+  const doc = await priceModel
+    .findOneAndUpdate(SINGLETON_FILTER, update, { new: true, upsert: true })
+    .lean();
+
+  return doc;
+}
+
+export async function getOrCreateCleanPrice() {
+  let doc = await cleanPriceModel.findOne(SINGLETON_FILTER).lean();
+  if (!doc) {
+    const saved = await new cleanPriceModel({
+      pricePerKvm: 0,
+      fixedPrice: 0,
+      extraServices: [
+        { Persinner: 0, ExtraBadrum: 0, ExtraToalett: 0, inglassadDusch: 0 },
+      ],
+    }).save();
+    doc = saved.toObject() as any;
+  }
+  return doc;
+}
+
+export async function updateCleanPrice(payload: CleanPricePayload) {
+  const es = payload.extraServices?.[0] ?? {
+    Persinner: 0,
+    ExtraBadrum: 0,
+    ExtraToalett: 0,
+    inglassadDusch: 0,
+  };
+
+  const update = {
+    pricePerKvm: Number(payload.pricePerKvm) || 0,
+    fixedPrice: Number(payload.fixedPrice) || 0,
+    extraServices: [
+      {
+        Persinner: Number(es.Persinner) || 0,
+        ExtraBadrum: Number(es.ExtraBadrum) || 0,
+        ExtraToalett: Number(es.ExtraToalett) || 0,
+        inglassadDusch: Number(es.inglassadDusch) || 0,
+      },
+    ],
+  };
+
+  const doc = await cleanPriceModel
+    .findOneAndUpdate(SINGLETON_FILTER, update, { new: true, upsert: true })
+    .lean();
+
+  return doc;
+}
