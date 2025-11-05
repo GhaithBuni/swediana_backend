@@ -1,5 +1,6 @@
 import MovingBookingModel from "../models/movingBooking";
 import nodemailer from "nodemailer";
+import { generateCompanyInfoPDF } from "../utils/movingPDF";
 
 interface ConfirmationEmailData {
   id: string;
@@ -258,7 +259,7 @@ function buildEmailHtml(booking: any) {
               </td>
             </tr>
           </table>
-          <p style="font-size:12px; color:#9ca3af; margin:12px 0 0 0;">© ${new Date().getFullYear()} Ditt Företag</p>
+          <p style="font-size:12px; color:#9ca3af; margin:12px 0 0 0;">© ${new Date().getFullYear()} Swediana</p>
         </td>
       </tr>
     </table>
@@ -277,6 +278,7 @@ export const sendConfirmationEmailMoving = async ({
     }
 
     const html = buildEmailHtml(booking);
+    const pdfBuffer = await generateCompanyInfoPDF();
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -299,6 +301,13 @@ export const sendConfirmationEmailMoving = async ({
       to: booking.email,
       subject,
       html,
+      attachments: [
+        {
+          filename: "Swediana-Tjansteinformation.pdf",
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
     });
 
     return {

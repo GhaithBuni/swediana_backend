@@ -18,6 +18,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1",
     "nodemailer": "^7.0.9",
+    "pdfkit": "^0.17.2",
+    "puppeteer": "^24.29.0",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
@@ -27,6 +29,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.3",
     "@types/nodemailer": "^7.0.2",
+    "@types/pdfkit": "^0.17.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2"
   }

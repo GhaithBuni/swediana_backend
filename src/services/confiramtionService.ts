@@ -1,6 +1,7 @@
 import ByggBookingModel from "../models/byggBooking";
 import CleaningBookingModel from "../models/cleaningBooking";
 import nodemailer from "nodemailer";
+import { generateCleaningPDF } from "../utils/generateCleaningPDF"; // Simple company info PDF
 
 interface ConfirmationEmailData {
   id: string;
@@ -151,6 +152,13 @@ function buildEmailHtml(booking: any) {
                     Övrigt: ${booking.message ? booking.message : "—"}
                   </p>
                 </div>
+
+                <!-- PDF Attachment Notice -->
+                <div style="margin:16px 0 0 0; padding:12px; background:#EEF2FF; border:1px solid #C7D2FE; border-radius:8px; text-align:center;">
+                  <p style="margin:0; font-size:13px; color:#4F46E5;">
+                    📎 <strong>Information om våra tjänster finns bifogad som PDF</strong>
+                  </p>
+                </div>
               </td>
             </tr>
             <tr>
@@ -195,7 +203,7 @@ function buildEmailHtml(booking: any) {
               </td>
             </tr>
           </table>
-          <p style="font-size:12px; color:#9ca3af; margin:12px 0 0 0;">© ${new Date().getFullYear()} Ditt Företag</p>
+          <p style="font-size:12px; color:#9ca3af; margin:12px 0 0 0;">© ${new Date().getFullYear()} Swediana</p>
         </td>
       </tr>
     </table>
@@ -213,6 +221,7 @@ export const sendConfirmationEmailCleaning = async ({
     }
 
     const html = buildEmailHtml(booking);
+    const pdfBuffer = await generateCleaningPDF();
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -233,6 +242,13 @@ export const sendConfirmationEmailCleaning = async ({
       to: booking.email,
       subject,
       html,
+      attachments: [
+        {
+          filename: "Swediana-Tjansteinformation.pdf",
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
     });
 
     return {
@@ -261,6 +277,8 @@ export const sendConfirmationEmailBygg = async ({
 
     const html = buildEmailHtml(booking);
 
+    // Generate company info PDF (same PDF for all bookings)
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
@@ -273,7 +291,7 @@ export const sendConfirmationEmailBygg = async ({
 
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
-    } – Flyttstäd ${formatDateSE(booking.date)} kl ${booking.time}`;
+    } – Byggstäd ${formatDateSE(booking.date)}`;
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
@@ -284,7 +302,7 @@ export const sendConfirmationEmailBygg = async ({
 
     return {
       success: true,
-      message: "Email sent successfully",
+      message: "Email sent successfully with PDF attachment",
       statusCode: 200,
     };
   } catch (err) {
