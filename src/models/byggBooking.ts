@@ -38,6 +38,7 @@ export interface ICleaningBooking extends Document {
   personalNumber?: string;
   message?: string;
   addressStreet: string;
+  cleanType?: string;
 
   // schedule
   date: Date;
@@ -99,7 +100,7 @@ const byggBookingSchema = new Schema<ICleaningBooking>(
     discountCode: { type: String, uppercase: true, trim: true },
     discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
     discountAmount: { type: Number, default: 0 },
-
+    cleanType: { type: String, trim: true, required: true },
     date: { type: Date, required: true },
     time: { type: String },
 

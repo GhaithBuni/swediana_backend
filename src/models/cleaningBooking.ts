@@ -36,6 +36,8 @@ export interface ICleaningBooking extends Document {
   personalNumber?: string;
   message?: string;
   addressStreet: string;
+  apartmentKeys?: "Jag ska lämna nycklarna til er" | "Jag ska vara hemma";
+  cleanType?: string;
 
   // schedule
   date: Date;
@@ -97,6 +99,12 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
     discountCode: { type: String, uppercase: true, trim: true },
     discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
     discountAmount: { type: Number, default: 0 },
+    apartmentKeys: {
+      type: String,
+      enum: ["Jag ska lämna nycklarna til er", "Jag ska vara hemma"],
+      trim: true,
+    },
+    cleanType: { type: String, trim: true, required: true },
 
     date: { type: Date, required: true },
     time: { type: String },

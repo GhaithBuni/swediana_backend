@@ -126,6 +126,7 @@ export const addByggBooking = async (
       discountAmount: discountAmount,
       // optional snapshot (already computed on client)
       priceDetails: params.priceDetails,
+      cleanType: params.cleanType,
 
       status: "pending",
     });

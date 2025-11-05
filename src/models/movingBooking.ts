@@ -55,11 +55,12 @@ export interface IMovingBooking extends Document {
   name: string;
   email: string;
   phone: string;
-  personalNumber?: string;
-  apartmentKeys?: string;
+  pnr?: string;
+  apartmentKeys?: "Jag ska lämna nycklarna til er" | "Jag ska vara hemma";
   whatToMove?: string;
   message?: string;
   addressStreet: string;
+  moveType?: string;
 
   // Booking date/time
   date: Date;
@@ -142,14 +143,19 @@ const MovingBookingSchema = new Schema<IMovingBooking>(
     name: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, required: true, trim: true },
-    personalNumber: { type: String, trim: true },
-    apartmentKeys: { type: String, trim: true },
+    pnr: { type: String, trim: true, required: true },
+    apartmentKeys: {
+      type: String,
+      enum: ["Jag ska lämna nycklarna til er", "Jag ska vara hemma"],
+      trim: true,
+    },
     whatToMove: { type: String, trim: true },
     message: { type: String, trim: true },
     addressStreet: { type: String, required: true },
     discountCode: { type: String, uppercase: true, trim: true },
     discountCodeId: { type: Schema.Types.ObjectId, ref: "DiscountCode" },
     discountAmount: { type: Number, default: 0 },
+    moveType: { type: String, trim: true, required: true },
 
     date: { type: Date, required: true },
     time: { type: String },

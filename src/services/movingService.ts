@@ -36,10 +36,11 @@ interface BookingParams {
   email: string;
   telefon: string;
   date: string;
-  presonalNumber?: string;
+  pnr?: string;
   apartmentKeys?: string;
   message?: string;
   addressStreet: string;
+  moveType?: string;
   discountCode?: string;
 
   priceDetails?: {
@@ -171,10 +172,11 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       name: params.name,
       email: normalizedEmail,
       phone: params.telefon,
-      personalNumber: params.presonalNumber,
+      pnr: params.pnr,
       apartmentKeys: params.apartmentKeys,
       message: params.message,
       addressStreet: params.addressStreet,
+      moveType: params.moveType,
       date: when,
 
       /** snapshot straight from client (already computed by your store) */

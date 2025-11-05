@@ -103,10 +103,11 @@ router.post("/", async (req, res) => {
       email: req.body.email,
       telefon: req.body.telefon,
       date: req.body.date, // you can convert to Date inside helper
-      presonalNumber: req.body.personalNumber, // keep spelling if helper expects it
+      pnr: req.body.pnr, // keep spelling if helper expects it
       apartmentKeys: req.body.apartmentKeys,
       message: req.body.message,
       addressStreet: req.body.addressStreet,
+      moveType: req.body.moveType,
     });
 
     if (!result?.success) {

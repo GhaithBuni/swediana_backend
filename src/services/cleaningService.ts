@@ -146,6 +146,8 @@ export const addCleaningBooking = async (
       discountCode: validatedDiscountCode,
       discountCodeId: discountCodeId,
       discountAmount: discountAmount,
+      apartmentKeys: params.apartmentKeys,
+      cleanType: params.cleanType,
 
       // price details with discount applied
       priceDetails: finalPriceDetails,

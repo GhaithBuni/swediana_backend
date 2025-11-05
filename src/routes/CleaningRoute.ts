@@ -153,6 +153,8 @@ router.post("/", async (req, res) => {
       personalNumber: req.body.personalNumber,
       message: req.body.message,
       addressStreet: req.body.addressStreet,
+      apartmentKeys: req.body.apartmentKeys,
+      cleanType: req.body.cleanType,
 
       discountCode: req.body.discountCode,
 

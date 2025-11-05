@@ -28,6 +28,8 @@ export interface CleaningBookingParams {
   message?: string;
   addressStreet?: string;
   discountCode?: string;
+  apartmentKeys?: "Jag ska lämna nycklarna til er" | "Jag ska vara hemma";
+  cleanType?: string;
 
   // price snapshot from UI (optional)
   priceDetails?: {

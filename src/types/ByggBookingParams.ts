@@ -30,6 +30,7 @@ export interface ByggBookingParams {
   addressStreet?: string;
 
   discountCode?: string;
+  cleanType?: string;
 
   // price snapshot from UI (optional)
   priceDetails?: {

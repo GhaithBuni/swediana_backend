@@ -45,6 +45,8 @@ router.post("/", async (req, res) => {
       date: req.body.date,
       personalNumber: req.body.personalNumber,
       message: req.body.message,
+      cleanType: req.body.cleanType,
+      addressStreet: req.body.addressStreet,
 
       // optional UI snapshot
       priceDetails: req.body.priceDetails,
