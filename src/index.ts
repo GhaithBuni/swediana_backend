@@ -10,6 +10,7 @@ import cleaningRoute from "./routes/CleaningRoute";
 import byggRoute from "./routes/byggRoute";
 import adminRoute from "./routes/adminRoute";
 import discountRoute from "./routes/discountRoute";
+import contact from "./routes/contactRoutes";
 import cors from "cors";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/cleaning", cleaningRoute);
 app.use("/bygg", byggRoute);
 app.use("/admin", adminRoute);
 app.use("/discount", discountRoute);
+app.use("/contact", contact);
 seedInitialPrices();
 seedInitialPricesCleaning();
 

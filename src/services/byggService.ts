@@ -63,7 +63,7 @@ export const addByggBooking = async (
 
       discountAmount = validation.discountAmount!;
       discountCodeId = validation.discount!._id;
-      validatedDiscountCode = params.discountCode.toUpperCase();
+      //validatedDiscountCode = params.discountCode.toUpperCase();
 
       // Recalculate totals with discount
       const subtotal = originalBase;
