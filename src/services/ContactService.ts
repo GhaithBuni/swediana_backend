@@ -14,7 +14,7 @@ export const getContact = async () => {
 interface GetParams {
   id: string;
 }
-export const getContactOd = async ({ id }: GetParams) => {
+export const getContactId = async ({ id }: GetParams) => {
   return await contact.findById(id);
 };
 
