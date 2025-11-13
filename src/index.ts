@@ -16,12 +16,13 @@ import cors from "cors";
 
 const app = express();
 const port = 4000;
+const mongouri = process.env.MONGODB_URI;
 
 app.use(express.json());
 app.use(cors());
 
 mongoose
-  .connect("mongodb://localhost:27017/swediana")
+  .connect(mongouri!)
   .then(() => {
     console.log("Connected ");
   })
