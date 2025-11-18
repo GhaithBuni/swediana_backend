@@ -41,6 +41,7 @@ app.use("/discount", discountRoute);
 app.use("/contact", contact);
 app.use("/foretagstad", foretagstad);
 app.use("/phone", phone);
+
 seedInitialPrices();
 seedInitialPricesCleaning();
 

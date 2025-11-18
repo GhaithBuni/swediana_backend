@@ -2,6 +2,7 @@
 import cleaningModel from "../models/cleaningBooking";
 import { CleaningBookingParams } from "../types/CleaningBookingParams";
 import { validateDiscountCode, applyDiscountCode } from "./discountService";
+import { sendBookingNotification } from "./notificationService";
 
 export const getCleaningBooking = async () => {
   return await cleaningModel.find().populate("discountCodeId");
@@ -163,6 +164,45 @@ export const addCleaningBooking = async (
     }
 
     console.log("Booking created:", doc.bookingNumber);
+
+    // 📧 SEND EMAIL NOTIFICATION
+    try {
+      // Prepare extras list for email
+      const extras: string[] = [];
+      if (params.Persienner && Number(params.Persienner) > 0) {
+        extras.push(`${params.Persienner} Persienner`);
+      }
+      if (params.badrum === "JA") {
+        extras.push("Extra Badrum");
+      }
+      if (params.toalett === "JA") {
+        extras.push("Extra Toalett");
+      }
+      if (params.Inglasadduschhörna === "JA") {
+        extras.push("Inglasad Duschhörna");
+      }
+
+      await sendBookingNotification({
+        bookingNumber: doc.bookingNumber,
+        customerName: params.name,
+        customerEmail: normalizedEmail,
+        customerPhone: params.phone ?? "",
+        service: "flyttstädning",
+        date: when.toLocaleDateString("sv-SE"),
+        time: params.time,
+        size: params.size,
+        address: params.addressStreet,
+        postcode: params.postcode,
+        totalAmount: finalPriceDetails?.totals?.grandTotal || 0,
+        extras: extras.length > 0 ? extras : undefined,
+        cleanType: params.cleanType,
+        apartmentKeys: params.apartmentKeys,
+      });
+    } catch (notificationError) {
+      // Don't fail the booking if notification fails
+      console.error("Failed to send email notification:", notificationError);
+    }
+
     return { success: true, data: saved };
   } catch (error: any) {
     console.error("Error saving cleaning booking:", error);
