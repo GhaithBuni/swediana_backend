@@ -13,6 +13,7 @@ import adminRoute from "./routes/adminRoute";
 import discountRoute from "./routes/discountRoute";
 import contact from "./routes/contactRoutes";
 import foretagstad from "./routes/foretagstadRoute";
+import phone from "./routes/phoneRoute";
 import cors from "cors";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/admin", adminRoute);
 app.use("/discount", discountRoute);
 app.use("/contact", contact);
 app.use("/foretagstad", foretagstad);
+app.use("/phone", phone);
 seedInitialPrices();
 seedInitialPricesCleaning();
 
