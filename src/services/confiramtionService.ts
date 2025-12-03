@@ -232,7 +232,7 @@ export const sendConfirmationEmailCleaning = async ({
     }
 
     const html = buildEmailHtml(booking);
-    const pdfBuffer = await generateCleaningPDF();
+    //const pdfBuffer = await generateCleaningPDF();
 
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
@@ -245,12 +245,6 @@ export const sendConfirmationEmailCleaning = async ({
       to: booking.email,
       subject,
       html,
-      attachments: [
-        {
-          filename: "Swediana-Tjansteinformation.pdf",
-          content: pdfBuffer,
-        },
-      ],
     });
 
     if (error) {

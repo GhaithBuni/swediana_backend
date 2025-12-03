@@ -289,7 +289,7 @@ export const sendConfirmationEmailMoving = async ({
     }
 
     const html = buildEmailHtml(booking);
-    const pdfBuffer = await generateCompanyInfoPDF();
+    // const pdfBuffer = await generateCompanyInfoPDF();
 
     const isCancelled = String(booking.status).toLowerCase() === "cancelled";
     const statusPrefix = isCancelled ? "Avbokning" : "Bokningsbekräftelse";
@@ -304,12 +304,6 @@ export const sendConfirmationEmailMoving = async ({
       to: booking.email,
       subject,
       html,
-      attachments: [
-        {
-          filename: "Swediana-Tjansteinformation.pdf",
-          content: pdfBuffer,
-        },
-      ],
     });
 
     if (error) {
