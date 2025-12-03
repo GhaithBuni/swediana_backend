@@ -1,19 +1,7 @@
 // server/services/emailNotificationService.ts
 import dotenv from "dotenv";
 dotenv.config();
-import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
-
-// Email configuration
-interface EmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
+import { Resend } from "resend";
 
 // Booking notification data
 interface BookingNotification {
@@ -33,20 +21,8 @@ interface BookingNotification {
   apartmentKeys?: string;
 }
 
-// Create email transporter
-const createTransporter = (): Transporter => {
-  const config: EmailConfig = {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER || "",
-      pass: process.env.SMTP_PASS || "",
-    },
-  };
-
-  return nodemailer.createTransport(config);
-};
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Generate HTML email template
 const generateEmailHTML = (booking: BookingNotification): string => {
@@ -362,16 +338,24 @@ export const sendBookingNotification = async (
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
     // Validate email configuration
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error("❌ Email configuration missing in .env file");
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ Resend API key missing in .env file");
       return {
         success: false,
-        error: "Email configuration missing",
+        error: "Resend API key missing",
       };
     }
 
-    const transporter = createTransporter();
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    if (!adminEmail) {
+      console.error("❌ Admin email missing in .env file");
+      return {
+        success: false,
+        error: "Admin email missing",
+      };
+    }
 
     const serviceName =
       booking.service === "flyttstädning"
@@ -380,26 +364,31 @@ export const sendBookingNotification = async (
         ? "Flytthjälp"
         : "Byggstäd";
 
-    // Send email
-    const info = await transporter.sendMail({
-      from: {
-        name: "Bokningssystem",
-        address: process.env.SMTP_USER,
-      },
+    // Send email using Resend
+    const { data, error } = await resend.emails.send({
+      from: `Bokningssystem <${fromEmail}>`,
       to: adminEmail,
       subject: `🔔 Ny ${serviceName} bokning - ${booking.bookingNumber}`,
       text: generateEmailText(booking),
       html: generateEmailHTML(booking),
     });
 
+    if (error) {
+      console.error("❌ Error sending email notification:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
     console.log(
       `✅ Email notification sent for booking ${booking.bookingNumber}`
     );
-    console.log(`📧 Message ID: ${info.messageId}`);
+    console.log(`📧 Message ID: ${data?.id}`);
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId: data?.id,
     };
   } catch (error: any) {
     console.error("❌ Error sending email notification:", error);
@@ -416,16 +405,35 @@ export const testEmailConfiguration = async (): Promise<{
   message: string;
 }> => {
   try {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+    if (!process.env.RESEND_API_KEY) {
       return {
         success: false,
-        message:
-          "Email configuration missing. Please set SMTP_USER and SMTP_PASSWORD in .env",
+        message: "Resend API key missing. Please set RESEND_API_KEY in .env",
       };
     }
 
-    const transporter = createTransporter();
-    await transporter.verify();
+    if (!process.env.ADMIN_EMAIL) {
+      return {
+        success: false,
+        message: "Admin email missing. Please set ADMIN_EMAIL in .env",
+      };
+    }
+
+    // Send a test email
+    const { error } = await resend.emails.send({
+      from: `Test <${process.env.FROM_EMAIL || "onboarding@resend.dev"}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: "Test Email Configuration",
+      text: "This is a test email to verify your Resend configuration.",
+      html: "<p>This is a test email to verify your Resend configuration.</p>",
+    });
+
+    if (error) {
+      return {
+        success: false,
+        message: `Email configuration error: ${error.message}`,
+      };
+    }
 
     return {
       success: true,
