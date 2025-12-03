@@ -347,15 +347,6 @@ export const sendBookingNotification = async (
     }
 
     const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
-    const adminEmail = process.env.ADMIN_EMAIL;
-
-    if (!adminEmail) {
-      console.error("❌ Admin email missing in .env file");
-      return {
-        success: false,
-        error: "Admin email missing",
-      };
-    }
 
     const serviceName =
       booking.service === "flyttstädning"
@@ -367,7 +358,7 @@ export const sendBookingNotification = async (
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: `Bokningssystem <${fromEmail}>`,
-      to: adminEmail,
+      to: fromEmail,
       subject: `🔔 Ny ${serviceName} bokning - ${booking.bookingNumber}`,
       text: generateEmailText(booking),
       html: generateEmailHTML(booking),
