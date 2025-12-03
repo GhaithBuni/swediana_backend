@@ -1,6 +1,8 @@
 import MovingBookingModel from "../models/movingBooking";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { generateCompanyInfoPDF } from "../utils/movingPDF";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface ConfirmationEmailData {
   id: string;
@@ -277,18 +279,17 @@ export const sendConfirmationEmailMoving = async ({
       return { success: false, message: "Booking not found", statusCode: 404 };
     }
 
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ Resend API key missing in .env file");
+      return {
+        success: false,
+        message: "Email configuration missing",
+        statusCode: 500,
+      };
+    }
+
     const html = buildEmailHtml(booking);
     const pdfBuffer = await generateCompanyInfoPDF();
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
 
     const isCancelled = String(booking.status).toLowerCase() === "cancelled";
     const statusPrefix = isCancelled ? "Avbokning" : "Bokningsbekräftelse";
@@ -296,8 +297,10 @@ export const sendConfirmationEmailMoving = async ({
       `${statusPrefix} #${booking.bookingNumber} – Flytthjälp ` +
       `${formatDateSE(booking.date)} kl ${booking.time || "—"}`;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+    const { data, error } = await resend.emails.send({
+      from: `Swediana <${fromEmail}>`,
       to: booking.email,
       subject,
       html,
@@ -305,10 +308,21 @@ export const sendConfirmationEmailMoving = async ({
         {
           filename: "Swediana-Tjansteinformation.pdf",
           content: pdfBuffer,
-          contentType: "application/pdf",
         },
       ],
     });
+
+    if (error) {
+      console.error("Error sending email:", error);
+      return {
+        success: false,
+        message: "Failed to send confirmation email",
+        statusCode: 500,
+      };
+    }
+
+    console.log(`✅ Confirmation email sent to ${booking.email}`);
+    console.log(`📧 Message ID: ${data?.id}`);
 
     return {
       success: true,
