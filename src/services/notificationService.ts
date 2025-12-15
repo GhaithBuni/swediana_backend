@@ -21,7 +21,7 @@ interface BookingNotification {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  service: "flyttstädning" | "moving" | "bygg";
+  service: "flyttstädning" | "Flyttning" | "byggstädning";
   date: string;
   time?: string;
   size?: number;
@@ -53,9 +53,9 @@ const generateEmailHTML = (booking: BookingNotification): string => {
   const serviceName =
     booking.service === "flyttstädning"
       ? "Flyttstäd"
-      : booking.service === "moving"
+      : booking.service === "Flyttning"
       ? "Flytthjälp"
-      : "Byggstäd";
+      : "byggstädning";
 
   const extrasHtml =
     booking.extras && booking.extras.length > 0
@@ -317,9 +317,9 @@ const generateEmailText = (booking: BookingNotification): string => {
   const serviceName =
     booking.service === "flyttstädning"
       ? "Flyttstäd"
-      : booking.service === "moving"
+      : booking.service === "Flyttning"
       ? "Flytthjälp"
-      : "Byggstäd";
+      : "byggstädning";
 
   let text = `
 NY BOKNING!
@@ -376,9 +376,9 @@ export const sendBookingNotification = async (
     const serviceName =
       booking.service === "flyttstädning"
         ? "Flyttstäd"
-        : booking.service === "moving"
+        : booking.service === "Flyttning"
         ? "Flytthjälp"
-        : "Byggstäd";
+        : "byggstädning";
 
     // Send email
     const info = await transporter.sendMail({

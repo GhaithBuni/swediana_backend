@@ -1,13 +1,16 @@
 import ByggBookingModel from "../models/byggBooking";
 import { ByggBookingParams } from "../types/ByggBookingParams";
 import { validateDiscountCode } from "./discountService";
+import { sendBookingNotification } from "./notificationService";
 
 export const getByggBooking = async () => {
   return await ByggBookingModel.find();
 };
+
 interface GetParams {
   id: string;
 }
+
 export const getByggBookingid = async ({ id }: GetParams) => {
   return await ByggBookingModel.findById(id);
 };
@@ -63,7 +66,7 @@ export const addByggBooking = async (
 
       discountAmount = validation.discountAmount!;
       discountCodeId = validation.discount!._id;
-      //validatedDiscountCode = params.discountCode.toUpperCase();
+      validatedDiscountCode = params.discountCode.toUpperCase();
 
       // Recalculate totals with discount
       const subtotal = originalBase;
@@ -125,16 +128,56 @@ export const addByggBooking = async (
       discountCodeId: discountCodeId,
       discountAmount: discountAmount,
       // optional snapshot (already computed on client)
-      priceDetails: params.priceDetails,
+      priceDetails: finalPriceDetails,
       cleanType: params.cleanType,
 
       status: "pending",
     });
 
     const saved = await doc.save();
+
+    console.log("Byggstäd booking created:", saved.bookingNumber || saved._id);
+
+    // 📧 SEND EMAIL NOTIFICATION
+    try {
+      // Prepare extras list for email
+      const extras: string[] = [];
+      if (params.Persienner && Number(params.Persienner) > 0) {
+        extras.push(`${params.Persienner} Persienner`);
+      }
+      if (params.badrum === "JA") {
+        extras.push("Extra Badrum");
+      }
+      if (params.toalett === "JA") {
+        extras.push("Extra Toalett");
+      }
+      if (params.Inglasadduschhörna === "JA") {
+        extras.push("Inglasad Duschhörna");
+      }
+
+      await sendBookingNotification({
+        bookingNumber: saved.bookingNumber || saved._id.toString(),
+        customerName: params.name,
+        customerEmail: normalizedEmail,
+        customerPhone: params.phone ?? "",
+        service: "byggstädning",
+        date: when.toLocaleDateString("sv-SE"),
+        time: params.time,
+        size: params.size,
+        address: params.addressStreet,
+        postcode: params.postcode,
+        totalAmount: finalPriceDetails?.totals?.grandTotal || 0,
+        extras: extras.length > 0 ? extras : undefined,
+        cleanType: params.cleanType,
+      });
+    } catch (notificationError) {
+      // Don't fail the booking if notification fails
+      console.error("Failed to send email notification:", notificationError);
+    }
+
     return { success: true, data: saved };
   } catch (error: any) {
-    console.error("Error saving cleaning booking:", error);
+    console.error("Error saving byggstäd booking:", error);
     console.log(params.postcode);
     return {
       success: false,

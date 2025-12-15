@@ -1,6 +1,6 @@
 import movingBookingModel from "../models/movingBooking";
 import { validateDiscountCode } from "./discountService";
-
+import { sendBookingNotification } from "./notificationService";
 export const getMovingBooking = async () => {
   console.log("Fetching moving bookings");
   return await movingBookingModel.find();
@@ -36,10 +36,12 @@ interface BookingParams {
   email: string;
   telefon: string;
   date: string;
+  time?: string;
   pnr?: string;
   apartmentKeys?: string;
   message?: string;
   addressStreet: string;
+  addressStreetNew?: string;
   moveType?: string;
   discountCode?: string;
 
@@ -57,6 +59,7 @@ interface BookingParams {
     };
   };
 }
+
 export const addBooking = async (params: BookingParams): Promise<any> => {
   try {
     const {
@@ -106,7 +109,7 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
 
       discountAmount = validation.discountAmount!;
       discountCodeId = validation.discount!._id;
-      //validatedDiscountCode = params.discountCode.toUpperCase();
+      validatedDiscountCode = params.discountCode.toUpperCase();
 
       // Recalculate totals with discount
       const subtotal = baseTotal;
@@ -164,9 +167,6 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       discountCode: validatedDiscountCode,
       discountCodeId: discountCodeId,
       discountAmount: discountAmount,
-      // disposal/storage if you add them:
-      // disposal: params.Disposal,
-      // storage: params.Storage,
 
       whatToMove: params.whatToMove,
       name: params.name,
@@ -180,10 +180,60 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       date: when,
 
       /** snapshot straight from client (already computed by your store) */
-      priceDetails,
+      priceDetails: finalPriceDetails,
     });
 
     const saved = await booking.save();
+
+    console.log("Moving booking created:", saved.bookingNumber || saved._id);
+
+    // 📧 SEND EMAIL NOTIFICATION
+    try {
+      // Prepare extras list for email
+      const extras: string[] = [];
+      if (params.packaging === "JA") {
+        extras.push("Packning");
+      }
+      if (params.packaKitchen === "JA") {
+        extras.push("Packa Kök");
+      }
+      if (params.mounting === "JA") {
+        extras.push("Montering");
+      }
+      if (params.cleaningOption === "JA") {
+        extras.push("Flyttstäd");
+      }
+
+      // Prepare address string
+      const fromAddress = `${params.addressStreet || ""} ${
+        params.postnummer || ""
+      }`.trim();
+      const toAddress = `${params.addressStreetNew || ""} ${
+        params.postNummerTo || ""
+      }`.trim();
+      const fullAddress = toAddress
+        ? `Från: ${fromAddress} → Till: ${toAddress}`
+        : fromAddress;
+
+      await sendBookingNotification({
+        bookingNumber: saved.bookingNumber || saved._id.toString(),
+        customerName: params.name,
+        customerEmail: normalizedEmail,
+        customerPhone: params.telefon,
+        service: "Flyttning",
+        date: when.toLocaleDateString("sv-SE"),
+        time: params.time,
+        size: params.size,
+        address: fullAddress,
+        totalAmount: finalPriceDetails?.totals?.grandTotal || 0,
+        extras: extras.length > 0 ? extras : undefined,
+        apartmentKeys: params.apartmentKeys,
+      });
+    } catch (notificationError) {
+      // Don't fail the booking if notification fails
+      console.error("Failed to send email notification:", notificationError);
+    }
+
     return { success: true, data: saved };
   } catch (error: any) {
     console.error("Error saving booking:", error);

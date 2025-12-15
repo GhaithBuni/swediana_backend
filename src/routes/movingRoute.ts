@@ -95,7 +95,7 @@ router.post("/", async (req, res) => {
       // extras (map names to what addBooking expects)
       packaging: req.body.packaging,
       mounting: req.body.mounting,
-      cleaningOption: req.body.flyttstad,
+      cleaningOption: req.body.cleaningOption,
       packaKitchen: req.body.packaKitchen,
 
       whatToMove: req.body.whatToMove,
