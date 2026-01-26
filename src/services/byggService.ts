@@ -1,6 +1,7 @@
 import ByggBookingModel from "../models/byggBooking";
 import { ByggBookingParams } from "../types/ByggBookingParams";
 import { validateDiscountCode } from "./discountService";
+import { addEventToGoogleCalendarBygg } from "./googleCalendarService";
 import { sendBookingNotification } from "./notificationService";
 
 export const getByggBooking = async () => {
@@ -16,7 +17,7 @@ export const getByggBookingid = async ({ id }: GetParams) => {
 };
 
 export const addByggBooking = async (
-  params: ByggBookingParams
+  params: ByggBookingParams,
 ): Promise<{
   success: boolean;
   data?: any;
@@ -54,7 +55,7 @@ export const addByggBooking = async (
       const validation = await validateDiscountCode(
         params.discountCode,
         originalBase,
-        "cleaning"
+        "cleaning",
       );
 
       if (!validation.valid) {
@@ -135,7 +136,12 @@ export const addByggBooking = async (
     });
 
     const saved = await doc.save();
-
+    // Add to Google Calendar
+    try {
+      await addEventToGoogleCalendarBygg(saved);
+    } catch (err) {
+      console.error("Failed to add event to Google Calendar:", err);
+    }
     console.log("Byggstäd booking created:", saved.bookingNumber || saved._id);
 
     // 📧 SEND EMAIL NOTIFICATION

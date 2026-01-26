@@ -1,5 +1,6 @@
 import movingBookingModel from "../models/movingBooking";
 import { validateDiscountCode } from "./discountService";
+import { addEventToGoogleCalendarMove } from "./googleCalendarService";
 import { sendBookingNotification } from "./notificationService";
 export const getMovingBooking = async () => {
   console.log("Fetching moving bookings");
@@ -97,7 +98,7 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
       const validation = await validateDiscountCode(
         params.discountCode,
         baseTotal,
-        "moving"
+        "moving",
       );
 
       if (!validation.valid) {
@@ -184,6 +185,12 @@ export const addBooking = async (params: BookingParams): Promise<any> => {
     });
 
     const saved = await booking.save();
+
+    try {
+      await addEventToGoogleCalendarMove(saved);
+    } catch (err) {
+      console.error("Failed to add event to Google Calendar:", err);
+    }
 
     console.log("Moving booking created:", saved.bookingNumber || saved._id);
 

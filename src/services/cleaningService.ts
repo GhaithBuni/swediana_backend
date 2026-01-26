@@ -3,7 +3,7 @@ import cleaningModel from "../models/cleaningBooking";
 import { CleaningBookingParams } from "../types/CleaningBookingParams";
 import { validateDiscountCode, applyDiscountCode } from "./discountService";
 import { sendBookingNotification } from "./notificationService";
-
+import { addEventToGoogleCalendar } from "./googleCalendarService";
 export const getCleaningBooking = async () => {
   return await cleaningModel.find().populate("discountCodeId");
 };
@@ -157,6 +157,13 @@ export const addCleaningBooking = async (
     });
 
     const saved = await doc.save();
+
+    // Add to Google Calendar
+    try {
+      await addEventToGoogleCalendar(saved);
+    } catch (err) {
+      console.error("Failed to add event to Google Calendar:", err);
+    }
 
     // Increment discount code usage count
     if (discountCodeId) {
