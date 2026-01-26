@@ -1,7 +1,9 @@
 import ByggBookingModel from "../models/byggBooking";
 import CleaningBookingModel from "../models/cleaningBooking";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { generateCleaningPDF } from "../utils/generateCleaningPDF"; // Simple company info PDF
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface ConfirmationEmailData {
   id: string;
@@ -220,36 +222,42 @@ export const sendConfirmationEmailCleaning = async ({
       return { success: false, message: "Booking not found", statusCode: 404 };
     }
 
-    const html = buildEmailHtml(booking);
-    const pdfBuffer = await generateCleaningPDF();
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ Resend API key missing in .env file");
+      return {
+        success: false,
+        message: "Email configuration missing",
+        statusCode: 500,
+      };
+    }
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    const html = buildEmailHtml(booking);
+    //const pdfBuffer = await generateCleaningPDF();
 
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
     } – Flyttstäd ${formatDateSE(booking.date)} kl ${booking.time}`;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+    const { data, error } = await resend.emails.send({
+      from: `Swediana <${fromEmail}>`,
       to: booking.email,
       subject,
       html,
-      attachments: [
-        {
-          filename: "Swediana-Tjansteinformation.pdf",
-          content: pdfBuffer,
-          contentType: "application/pdf",
-        },
-      ],
     });
+
+    if (error) {
+      console.error("Error sending confirmation email:", error);
+      return {
+        success: false,
+        message: "Failed to send confirmation email",
+        statusCode: 500,
+      };
+    }
+
+    console.log(`✅ Confirmation email sent to ${booking.email}`);
+    console.log(`📧 Message ID: ${data?.id}`);
 
     return {
       success: true,
@@ -275,34 +283,45 @@ export const sendConfirmationEmailBygg = async ({
       return { success: false, message: "Booking not found", statusCode: 404 };
     }
 
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ Resend API key missing in .env file");
+      return {
+        success: false,
+        message: "Email configuration missing",
+        statusCode: 500,
+      };
+    }
+
     const html = buildEmailHtml(booking);
-
-    // Generate company info PDF (same PDF for all bookings)
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
 
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
     } – Byggstäd ${formatDateSE(booking.date)}`;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+    const { data, error } = await resend.emails.send({
+      from: `Swediana <${fromEmail}>`,
       to: booking.email,
       subject,
       html,
     });
 
+    if (error) {
+      console.error("Error sending confirmation email:", error);
+      return {
+        success: false,
+        message: "Failed to send confirmation email",
+        statusCode: 500,
+      };
+    }
+
+    console.log(`✅ Confirmation email sent to ${booking.email}`);
+    console.log(`📧 Message ID: ${data?.id}`);
+
     return {
       success: true,
-      message: "Email sent successfully with PDF attachment",
+      message: "Email sent successfully",
       statusCode: 200,
     };
   } catch (err) {
