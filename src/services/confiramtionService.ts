@@ -58,12 +58,12 @@ function buildEmailHtml(booking: any) {
       (l) => `
         <tr>
           <td style="padding:8px 0; font-size:14px;">${l.label}${
-        l.meta ? ` <span style="color:#6b7280;">(${l.meta})</span>` : ""
-      }</td>
+            l.meta ? ` <span style="color:#6b7280;">(${l.meta})</span>` : ""
+          }</td>
           <td style="padding:8px 0; font-size:14px; text-align:right; white-space:nowrap;">${SEK(
-            l.amount
+            l.amount,
           )}</td>
-        </tr>`
+        </tr>`,
     )
     .join("");
 
@@ -172,19 +172,19 @@ function buildEmailHtml(booking: any) {
                   <tr>
                     <td style="padding:6px 0; font-size:14px; opacity:0.9;">Grundpris</td>
                     <td style="padding:6px 0; font-size:14px; text-align:right;">${SEK(
-                      totals.base || 0
+                      totals.base || 0,
                     )}</td>
                   </tr>
                   <tr>
                     <td style="padding:2px 0; font-size:14px; opacity:0.9;">Tillval</td>
                     <td style="padding:2px 0; font-size:14px; text-align:right;">${SEK(
-                      totals.extras || 0
+                      totals.extras || 0,
                     )}</td>
                   </tr>
                   <tr>
                     <td style="padding:8px 0; font-size:16px; font-weight:600;">Att betala</td>
                     <td style="padding:8px 0; font-size:16px; font-weight:600; text-align:right;">${SEK(
-                      totals.grandTotal || 0
+                      totals.grandTotal || 0,
                     )}</td>
                   </tr>
                 </table>
