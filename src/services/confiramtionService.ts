@@ -212,6 +212,8 @@ function buildEmailHtml(booking: any) {
   </body>
   </html>`;
 }
+import { readFile } from "fs/promises";
+import path from "path";
 
 export const sendConfirmationEmailCleaning = async ({
   id,
@@ -233,6 +235,13 @@ export const sendConfirmationEmailCleaning = async ({
 
     const html = buildEmailHtml(booking);
 
+    // Read the PDF file
+    const pdfPath = path.join(
+      process.cwd(),
+      "public/pdfs/Bokningsbekräftelse-flyttstädning.pdf",
+    );
+    const pdfBuffer = await readFile(pdfPath);
+
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
     } – Flyttstäd ${formatDateSE(booking.date)} kl ${booking.time}`;
@@ -244,6 +253,12 @@ export const sendConfirmationEmailCleaning = async ({
       to: booking.email,
       subject,
       html,
+      attachments: [
+        {
+          filename: "Bokningsbekräftelse-flyttstädning.pdf",
+          content: pdfBuffer,
+        },
+      ],
     });
 
     if (error) {
