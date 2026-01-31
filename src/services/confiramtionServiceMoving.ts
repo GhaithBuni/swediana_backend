@@ -96,12 +96,12 @@ function buildEmailHtml(booking: any) {
       (l) => `
       <tr>
         <td style="padding:8px 0; font-size:14px;">${l.label}${
-        l.meta ? ` <span style="color:#6b7280;">(${l.meta})</span>` : ""
-      }</td>
+          l.meta ? ` <span style="color:#6b7280;">(${l.meta})</span>` : ""
+        }</td>
         <td style="padding:8px 0; font-size:14px; text-align:right; white-space:nowrap;">${SEK(
-          l.amount
+          l.amount,
         )}</td>
-      </tr>`
+      </tr>`,
     )
     .join("");
 
@@ -225,21 +225,21 @@ function buildEmailHtml(booking: any) {
                   ${lineRows}
                   <tr><td colspan="2" style="border-top:1px solid #374151; height:8px;"></td></tr>
                   <tr><td style="padding:6px 0; font-size:14px; opacity:0.9;">Flytt – grund</td><td style="padding:6px 0; font-size:14px; text-align:right;">${SEK(
-                    movingBase
+                    movingBase,
                   )}</td></tr>
                   <tr><td style="padding:2px 0; font-size:14px; opacity:0.9;">Flytt – tillval</td><td style="padding:2px 0; font-size:14px; text-align:right;">${SEK(
-                    movingExtras
+                    movingExtras,
                   )}</td></tr>
                   <tr><td style="padding:2px 0; font-size:14px; opacity:0.9;">Flyttstäd – efter rabatt</td><td style="padding:2px 0; font-size:14px; text-align:right;">${SEK(
-                    cleaningBaseAfterDiscount
+                    cleaningBaseAfterDiscount,
                   )}</td></tr>
                   <tr><td style="padding:2px 0; font-size:14px; opacity:0.9;">Flyttstäd – tillval</td><td style="padding:2px 0; font-size:14px; text-align:right;">${SEK(
-                    cleaningExtras
+                    cleaningExtras,
                   )}</td></tr>
                   <tr>
                     <td style="padding:8px 0; font-size:16px; font-weight:600;">Att betala</td>
                     <td style="padding:8px 0; font-size:16px; font-weight:600; text-align:right;">${SEK(
-                      grandTotal
+                      grandTotal,
                     )}</td>
                   </tr>
                 </table>
@@ -270,6 +270,9 @@ function buildEmailHtml(booking: any) {
   `;
 }
 
+import { readFile } from "fs/promises";
+import path from "path";
+
 export const sendConfirmationEmailMoving = async ({
   id,
 }: ConfirmationEmailData) => {
@@ -289,7 +292,13 @@ export const sendConfirmationEmailMoving = async ({
     }
 
     const html = buildEmailHtml(booking);
-    // const pdfBuffer = await generateCompanyInfoPDF();
+
+    // Read the PDF file
+    const pdfPath = path.join(
+      process.cwd(),
+      "public/pdfs/Bokningsbekräftelse-flytthjälp.pdf",
+    );
+    const pdfBuffer = await readFile(pdfPath);
 
     const isCancelled = String(booking.status).toLowerCase() === "cancelled";
     const statusPrefix = isCancelled ? "Avbokning" : "Bokningsbekräftelse";
@@ -304,6 +313,12 @@ export const sendConfirmationEmailMoving = async ({
       to: booking.email,
       subject,
       html,
+      attachments: [
+        {
+          filename: "Bokningsbekräftelse-flytthjälp.pdf",
+          content: pdfBuffer,
+        },
+      ],
     });
 
     if (error) {

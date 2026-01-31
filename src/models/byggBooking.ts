@@ -77,7 +77,7 @@ const AddressSchema = new Schema<ICleaningAddress>(
     },
     parkingDistance: { type: Number, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const byggBookingSchema = new Schema<ICleaningBooking>(
@@ -121,7 +121,7 @@ const byggBookingSchema = new Schema<ICleaningBooking>(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 byggBookingSchema.pre("save", async function (next) {

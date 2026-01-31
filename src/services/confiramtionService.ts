@@ -232,7 +232,6 @@ export const sendConfirmationEmailCleaning = async ({
     }
 
     const html = buildEmailHtml(booking);
-    //const pdfBuffer = await generateCleaningPDF();
 
     const subject = `Bokningsbekräftelse #${
       booking.bookingNumber
