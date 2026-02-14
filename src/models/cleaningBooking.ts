@@ -66,17 +66,15 @@ const AddressSchema = new Schema<ICleaningAddress>(
     homeType: {
       type: String,
       enum: ["lagenhet", "Hus", "forrad", "kontor"],
-      required: true,
     },
-    floor: { type: String, required: true },
+    floor: { type: String },
     access: {
       type: String,
       enum: ["stairs", "elevator", "large-elevator"],
-      required: true,
     },
-    parkingDistance: { type: Number, required: true },
+    parkingDistance: { type: Number },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CleaningBookingSchema = new Schema<ICleaningBooking>(
@@ -126,7 +124,7 @@ const CleaningBookingSchema = new Schema<ICleaningBooking>(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Pre-save hook to auto-increment bookingNumber
